@@ -1,4 +1,4 @@
-########################
+###########################
 
 Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class
 
@@ -7,11 +7,7 @@ Wrapper (including ability to hook to Tkinter GUI) to read load-cell/wheatstone-
 From Phidgets' website:
 
 "The PhidgetBridge lets you connect up to 4 un-amplified Wheatstone bridges, such as:
-Strain gauges,
-Compression load cells,
-Pressure sensors/Barometers,
-Piezoresistive accelerometers, and
-Magnetoresistive sensors (Compasses)."
+Strain gauges, Compression load cells, Pressure sensors/Barometers, Piezoresistive accelerometers, and Magnetoresistive sensors (Compasses)."
 
 PhidgetBridge 4-Input
 
@@ -27,7 +23,7 @@ www.reubotics.com
 
 Apache 2 License
 
-Software Revision A, 05/23/2022
+Software Revision B, 08/29/2022
 
 Verified working on: 
 
@@ -41,9 +37,17 @@ Raspberry Pi Buster
 
 *NOTE THAT YOU MUST INSTALL BOTH THE Phidget22 LIBRARY AS WELL AS THE PYTHON MODULE.*
 
-########################  
+###########################
 
 ########################### Python module installation instructions, all OS's
+
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies: ['future.builtins', 'LowPassFilter_ReubenPython2and3Class', 'Phidget22']
+
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_TestProgram: ['MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class', 'MyPrint_ReubenPython2and3Class']
+
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_NestedLayers: ['future.builtins', 'numpy', 'pexpect', 'psutil']
+
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_All: ['future.builtins', 'LowPassFilter_ReubenPython2and3Class', 'MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class', 'MyPrint_ReubenPython2and3Class', 'numpy', 'pexpect', 'Phidget22', 'psutil']
 
 https://pypi.org/project/Phidget22/#files
 
