@@ -6,25 +6,32 @@ reuben.brewer@gmail.com
 www.reubotics.com
 
 Apache 2 License
-Software Revision A, 05/23/2022
+Software Revision B, 08/29/2022
 
 Verified working on: Python 2.7, 3.8 for Windows 8.1, 10 64-bit and Raspberry Pi Buster (no Mac testing yet).
 '''
 
 __author__ = 'reuben.brewer'
 
-import Phidget22.Devices.VoltageRatioInput
+###########################################################
 from LowPassFilter_ReubenPython2and3Class import *
+###########################################################
 
-import os, sys, platform
-import time, datetime
+###########################################################
+import os
+import sys
+import platform
+import time
+import datetime
 import math
 import collections
+from copy import * #for deepcopy
 import inspect #To enable 'TellWhichFileWereIn'
 import threading
 import traceback
+###########################################################
 
-###############
+###########################################################
 if sys.version_info[0] < 3:
     from Tkinter import * #Python 2
     import tkFont
@@ -33,39 +40,37 @@ else:
     from tkinter import * #Python 3
     import tkinter.font as tkFont #Python 3
     from tkinter import ttk
-###############
+###########################################################
 
-###############
+###########################################################
 if sys.version_info[0] < 3:
     import Queue  # Python 2
 else:
     import queue as Queue  # Python 3
-###############
+###########################################################
 
-###############
+###########################################################
 if sys.version_info[0] < 3:
     from builtins import raw_input as input
 else:
     from future.builtins import input as input
-############### #"sudo pip3 install future" (Python 3) AND "sudo pip install future" (Python 2)
+###########################################################"sudo pip3 install future" (Python 3) AND "sudo pip install future" (Python 2)
 
-###############
+###########################################################
 import platform
 if platform.system() == "Windows":
     import ctypes
     winmm = ctypes.WinDLL('winmm')
     winmm.timeBeginPeriod(1) #Set minimum timer resolution to 1ms so that time.sleep(0.001) behaves properly.
-###############
+###########################################################
 
 ###########################################################
-###########################################################
-#To install Phidget22, enter folder "Phidget22Python_1.0.0.20190107\Phidget22Python" and type "python setup.py install"
+import Phidget22
 from Phidget22.PhidgetException import *
 from Phidget22.Phidget import *
 from Phidget22.Devices.Log import *
 from Phidget22.LogLevel import *
 from Phidget22.Devices.VoltageRatioInput import *
-###########################################################
 ###########################################################
 
 class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass the Tkinter Frame
@@ -79,7 +84,7 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         #########################################################
         #########################################################
         self.EXIT_PROGRAM_FLAG = 0
-        self.OBJECT_CREATED_SUCCESSFULLY_FLAG = -1
+        self.OBJECT_CREATED_SUCCESSFULLY_FLAG = 0
         self.EnableInternal_MyPrint_Flag = 0
         self.MainThread_still_running_flag = 0
 
@@ -109,14 +114,28 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         self.VoltageRatioInputsList_VoltageRatio_LowPassFilter_ReubenPython2and3ClassObject = list()
 
         self.VoltageRatioInputsList_VoltageRatio_Raw_ZeroOffsetValue = [0.0] * self.NumberOfWheatstoneBridges
+        self.VoltageRatioInputsList_VoltageRatio_Filtered_ZeroOffsetValue = [0.0] * self.NumberOfWheatstoneBridges
         self.VoltageRatioInputsList_NeedsToBeZeroedFlag = [0] * self.NumberOfWheatstoneBridges
-        self.VoltageRatioInputsList_DataForZeroingBridge_EnableCollectionFlag = [0] * self.NumberOfWheatstoneBridges
 
-        #self.VoltageRatioInputsList_VoltageRatio_Raw_DataForZeroingBridgeQueue = [Queue.Queue()] * self.NumberOfWheatstoneBridges #THIS LINE DOESN'T WORK AS IT COUPLE ALL QUEUE VALUES TOGETHER ACROSS DIFFERENT CHANNELS
-        self.VoltageRatioInputsList_VoltageRatio_Raw_DataForZeroingBridgeQueue = list()
+        self.VoltageRatioInputsList_NeedsToBeSnapshottedFlag = [0] * self.NumberOfWheatstoneBridges
+        self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag = [0] * self.NumberOfWheatstoneBridges
+        self.VoltageRatioInputsList_VoltageRatio_Raw_SnapshottedValue = [0.0] * self.NumberOfWheatstoneBridges
+        self.VoltageRatioInputsList_VoltageRatio_Filtered_SnapshottedValue = [0.0] * self.NumberOfWheatstoneBridges
+
+        ####
+        #self.VoltageRatioInputsList_VoltageRatio_Raw_DataForSnapshottingBridgeQueue = [Queue.Queue()] * self.NumberOfWheatstoneBridges #THIS LINE DOESN'T WORK AS IT COUPLE ALL QUEUE VALUES TOGETHER ACROSS DIFFERENT CHANNELS
+        self.VoltageRatioInputsList_VoltageRatio_Raw_DataForSnapshottingBridgeQueue = list()
         for VoltageRatioInputChannel in range(0, self.NumberOfWheatstoneBridges):
-            self.VoltageRatioInputsList_VoltageRatio_Raw_DataForZeroingBridgeQueue.append(Queue.Queue())
-
+            self.VoltageRatioInputsList_VoltageRatio_Raw_DataForSnapshottingBridgeQueue.append(Queue.Queue())
+        ####
+        
+        ####
+        #self.VoltageRatioInputsList_VoltageRatio_Filtered_DataForSnapshottingBridgeQueue = [Queue.Queue()] * self.NumberOfWheatstoneBridges #THIS LINE DOESN'T WORK AS IT COUPLE ALL QUEUE VALUES TOGETHER ACROSS DIFFERENT CHANNELS
+        self.VoltageRatioInputsList_VoltageRatio_Filtered_DataForSnapshottingBridgeQueue = list()
+        for VoltageRatioInputChannel in range(0, self.NumberOfWheatstoneBridges):
+            self.VoltageRatioInputsList_VoltageRatio_Filtered_DataForSnapshottingBridgeQueue.append(Queue.Queue())
+        ####
+        
         self.VoltageRatioInputsList_OnVoltageRatioChangeCallback_CurrentTime = [-11111.0] * self.NumberOfWheatstoneBridges
         self.VoltageRatioInputsList_OnVoltageRatioChangeCallback_StartingTime = [-11111.0] * self.NumberOfWheatstoneBridges
         self.VoltageRatioInputsList_OnVoltageRatioChangeCallback_LastTime = [-11111.0] * self.NumberOfWheatstoneBridges
@@ -147,11 +166,7 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
             self.BridgeGain_SupportedValuesDict_PhidgetConstantsAsKeys[self.BridgeGain_SupportedValuesDict_ActualIntegerValuesAsKeys[key]] = key
         #####
 
-        self.MostRecentDataDict = dict([("VoltageRatioInputsList_VoltageRatio_Raw", self.VoltageRatioInputsList_VoltageRatio_Raw),
-                                        ("VoltageRatioInputsList_VoltageRatio_Filtered", self.VoltageRatioInputsList_VoltageRatio_Filtered),
-                                        ("VoltageRatioInputsList_ErrorCallbackFiredFlag", self.VoltageRatioInputsList_ErrorCallbackFiredFlag),
-                                        ("VoltageRatioInputsList_UpdateDeltaTseconds", self.VoltageRatioInputsList_UpdateDeltaTseconds),
-                                        ("Time", self.CurrentTime_CalculatedFromMainThread)])
+        self.MostRecentDataDict = dict()
         #########################################################
         #########################################################
         
@@ -182,138 +197,126 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         if "GUIparametersDict" in setup_dict:
             self.GUIparametersDict = setup_dict["GUIparametersDict"]
 
-            ##########################################
+            #########################################################
             if "USE_GUI_FLAG" in self.GUIparametersDict:
                 self.USE_GUI_FLAG = self.PassThrough0and1values_ExitProgramOtherwise("USE_GUI_FLAG", self.GUIparametersDict["USE_GUI_FLAG"])
             else:
                 self.USE_GUI_FLAG = 0
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: USE_GUI_FLAG: " + str(self.USE_GUI_FLAG))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "root" in self.GUIparametersDict:
                 self.root = self.GUIparametersDict["root"]
-                self.RootIsOwnedExternallyFlag = 1
             else:
-                self.root = None
-                self.RootIsOwnedExternallyFlag = 0
+                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Error, must pass in 'root'")
+                return
+            #########################################################
 
-            print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: RootIsOwnedExternallyFlag: " + str(self.RootIsOwnedExternallyFlag))
-            ##########################################
-
-            ##########################################
-            if "GUI_RootAfterCallbackInterval_Milliseconds" in self.GUIparametersDict:
-                self.GUI_RootAfterCallbackInterval_Milliseconds = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("GUI_RootAfterCallbackInterval_Milliseconds", self.GUIparametersDict["GUI_RootAfterCallbackInterval_Milliseconds"], 0.0, 1000.0))
-            else:
-                self.GUI_RootAfterCallbackInterval_Milliseconds = 30
-
-            print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: GUI_RootAfterCallbackInterval_Milliseconds: " + str(self.GUI_RootAfterCallbackInterval_Milliseconds))
-            ##########################################
-
-            ##########################################
+            #########################################################
             if "EnableInternal_MyPrint_Flag" in self.GUIparametersDict:
                 self.EnableInternal_MyPrint_Flag = self.PassThrough0and1values_ExitProgramOtherwise("EnableInternal_MyPrint_Flag", self.GUIparametersDict["EnableInternal_MyPrint_Flag"])
             else:
                 self.EnableInternal_MyPrint_Flag = 0
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: EnableInternal_MyPrint_Flag: " + str(self.EnableInternal_MyPrint_Flag))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "PrintToConsoleFlag" in self.GUIparametersDict:
                 self.PrintToConsoleFlag = self.PassThrough0and1values_ExitProgramOtherwise("PrintToConsoleFlag", self.GUIparametersDict["PrintToConsoleFlag"])
             else:
                 self.PrintToConsoleFlag = 1
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: PrintToConsoleFlag: " + str(self.PrintToConsoleFlag))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "NumberOfPrintLines" in self.GUIparametersDict:
                 self.NumberOfPrintLines = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("NumberOfPrintLines", self.GUIparametersDict["NumberOfPrintLines"], 0.0, 50.0))
             else:
                 self.NumberOfPrintLines = 10
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: NumberOfPrintLines: " + str(self.NumberOfPrintLines))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "UseBorderAroundThisGuiObjectFlag" in self.GUIparametersDict:
                 self.UseBorderAroundThisGuiObjectFlag = self.PassThrough0and1values_ExitProgramOtherwise("UseBorderAroundThisGuiObjectFlag", self.GUIparametersDict["UseBorderAroundThisGuiObjectFlag"])
             else:
                 self.UseBorderAroundThisGuiObjectFlag = 0
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: UseBorderAroundThisGuiObjectFlag: " + str(self.UseBorderAroundThisGuiObjectFlag))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "GUI_ROW" in self.GUIparametersDict:
                 self.GUI_ROW = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("GUI_ROW", self.GUIparametersDict["GUI_ROW"], 0.0, 1000.0))
             else:
                 self.GUI_ROW = 0
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: GUI_ROW: " + str(self.GUI_ROW))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "GUI_COLUMN" in self.GUIparametersDict:
                 self.GUI_COLUMN = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("GUI_COLUMN", self.GUIparametersDict["GUI_COLUMN"], 0.0, 1000.0))
             else:
                 self.GUI_COLUMN = 0
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: GUI_COLUMN: " + str(self.GUI_COLUMN))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "GUI_PADX" in self.GUIparametersDict:
                 self.GUI_PADX = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("GUI_PADX", self.GUIparametersDict["GUI_PADX"], 0.0, 1000.0))
             else:
-                self.GUI_PADX = 0
+                self.GUI_PADX = 1
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: GUI_PADX: " + str(self.GUI_PADX))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "GUI_PADY" in self.GUIparametersDict:
                 self.GUI_PADY = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("GUI_PADY", self.GUIparametersDict["GUI_PADY"], 0.0, 1000.0))
             else:
-                self.GUI_PADY = 0
+                self.GUI_PADY = 1
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: GUI_PADY: " + str(self.GUI_PADY))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "GUI_ROWSPAN" in self.GUIparametersDict:
-                self.GUI_ROWSPAN = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("GUI_ROWSPAN", self.GUIparametersDict["GUI_ROWSPAN"], 0.0, 1000.0))
+                self.GUI_ROWSPAN = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("GUI_ROWSPAN", self.GUIparametersDict["GUI_ROWSPAN"], 1.0, 1000.0))
             else:
-                self.GUI_ROWSPAN = 0
+                self.GUI_ROWSPAN = 1
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: GUI_ROWSPAN: " + str(self.GUI_ROWSPAN))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "GUI_COLUMNSPAN" in self.GUIparametersDict:
-                self.GUI_COLUMNSPAN = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("GUI_COLUMNSPAN", self.GUIparametersDict["GUI_COLUMNSPAN"], 0.0, 1000.0))
+                self.GUI_COLUMNSPAN = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("GUI_COLUMNSPAN", self.GUIparametersDict["GUI_COLUMNSPAN"], 1.0, 1000.0))
             else:
-                self.GUI_COLUMNSPAN = 0
+                self.GUI_COLUMNSPAN = 1
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: GUI_COLUMNSPAN: " + str(self.GUI_COLUMNSPAN))
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if "GUI_STICKY" in self.GUIparametersDict:
                 self.GUI_STICKY = str(self.GUIparametersDict["GUI_STICKY"])
             else:
                 self.GUI_STICKY = "w"
 
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: GUI_STICKY: " + str(self.GUI_STICKY))
-            ##########################################
+            #########################################################
 
         else:
             self.GUIparametersDict = dict()
             self.USE_GUI_FLAG = 0
-            print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: No GUIparametersDict present, setting USE_GUI_FLAG = " + str(self.USE_GUI_FLAG))
+            print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: No GUIparametersDict present, setting USE_GUI_FLAG: " + str(self.USE_GUI_FLAG))
 
         #print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: GUIparametersDict: " + str(self.GUIparametersDict))
         #########################################################
@@ -325,7 +328,7 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
             try:
                 self.DesiredSerialNumber = int(setup_dict["DesiredSerialNumber"])
             except:
-                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: ERROR, DesiredSerialNumber invalid.")
+                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Error, DesiredSerialNumber invalid.")
         else:
             self.DesiredSerialNumber = -1
         
@@ -379,11 +382,10 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
                     EnabledState = int(self.PassThrough0and1values_ExitProgramOtherwise("VoltageRatioInputsList_EnabledStateBoolean, VoltageRatioInputChannel " + str(VoltageRatioInputChannel), EnabledState_TEMP))
                     self.VoltageRatioInputsList_EnabledStateBoolean.append(EnabledState)
             else:
-                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: ERROR, 'VoltageRatioInputsList_EnabledStateBoolean' must be length " + str(len(self.NumberOfWheatstoneBridges)))
-                self.OBJECT_CREATED_SUCCESSFULLY_FLAG = 0
+                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Error, 'VoltageRatioInputsList_EnabledStateBoolean' must be length " + str(len(self.NumberOfWheatstoneBridges)))
                 return
         else:
-            self.VoltageRatioInputsList_EnabledStateBoolean = [1, 1, 1, 1]
+            self.VoltageRatioInputsList_EnabledStateBoolean = [1]*self.NumberOfWheatstoneBridges
 
         print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: VoltageRatioInputsList_EnabledStateBoolean: " + str(self.VoltageRatioInputsList_EnabledStateBoolean))
         #########################################################
@@ -413,15 +415,14 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
                         SetToPrint = SetToPrint[:-2] + "]"
                         ###
 
-                        print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: ERROR, 'VoltageRatioInputsList_BridgeGain' must be in the set " + SetToPrint)
+                        print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Error, 'VoltageRatioInputsList_BridgeGain' must be in the set " + SetToPrint)
                         return
             else:
-                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: ERROR, 'VoltageRatioInputsList_BridgeGain' must be a length " + str(len(self.NumberOfWheatstoneBridges)))
-                self.OBJECT_CREATED_SUCCESSFULLY_FLAG = 0
+                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Error, 'VoltageRatioInputsList_BridgeGain' must be a length " + str(len(self.NumberOfWheatstoneBridges)))
                 return
         else:
-            self.VoltageRatioInputsList_BridgeGain_ActualIntegerValue = [1, 1, 1, 1]
-            self.VoltageRatioInputsList_BridgeGain_PhidgetsConstant = [1, 1, 1, 1]
+            self.VoltageRatioInputsList_BridgeGain_ActualIntegerValue = [1]*self.NumberOfWheatstoneBridges
+            self.VoltageRatioInputsList_BridgeGain_PhidgetsConstant = [1]*self.NumberOfWheatstoneBridges
 
         print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: VoltageRatioInputsList_BridgeGain: " + str(self.VoltageRatioInputsList_BridgeGain_ActualIntegerValue))
         #########################################################
@@ -437,11 +438,10 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
                     SpeedExponentialFilterLambda = self.PassThroughFloatValuesInRange_ExitProgramOtherwise("VoltageRatioInputsList_VoltageRatio_LowPassFilter_Lambda, VoltageRatioInputChannel " + str(VoltageRatioInputChannel), SpeedExponentialFilterLambda_TEMP, 0.0, 1.0)
                     self.VoltageRatioInputsList_VoltageRatio_LowPassFilter_Lambda.append(SpeedExponentialFilterLambda)
             else:
-                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: ERROR, 'VoltageRatioInputsList_VoltageRatio_LowPassFilter_Lambda' must be a length " + str(len(self.NumberOfWheatstoneBridges)))
-                self.OBJECT_CREATED_SUCCESSFULLY_FLAG = 0
+                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Error, 'VoltageRatioInputsList_VoltageRatio_LowPassFilter_Lambda' must be a length " + str(len(self.NumberOfWheatstoneBridges)))
                 return
         else:
-            self.VoltageRatioInputsList_VoltageRatio_LowPassFilter_Lambda = [1.0, 1.0, 1.0, 1.0]
+            self.VoltageRatioInputsList_VoltageRatio_LowPassFilter_Lambda = [1.0]*self.NumberOfWheatstoneBridges #Default to no filtering, new_filtered_value = k * raw_sensor_value + (1 - k) * old_filtered_value
 
         print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: VoltageRatioInputsList_VoltageRatio_LowPassFilter_Lambda: " + str(self.VoltageRatioInputsList_VoltageRatio_LowPassFilter_Lambda))
         #########################################################
@@ -457,11 +457,10 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
                     VoltageRatioChangeTrigger = self.PassThroughFloatValuesInRange_ExitProgramOtherwise("VoltageRatioInputsList_VoltageRatioChangeTrigger, VoltageRatioInputChannel " + str(VoltageRatioInputChannel), VoltageRatioChangeTrigger_TEMP, 0.0, 1.0)
                     self.VoltageRatioInputsList_VoltageRatioChangeTrigger.append(VoltageRatioChangeTrigger)
             else:
-                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: ERROR, 'VoltageRatioInputsList_VoltageRatioChangeTrigger' must be a length " + str(len(self.NumberOfWheatstoneBridges)))
-                self.OBJECT_CREATED_SUCCESSFULLY_FLAG = 0
+                print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Error, 'VoltageRatioInputsList_VoltageRatioChangeTrigger' must be a length " + str(len(self.NumberOfWheatstoneBridges)))
                 return
         else:
-            self.VoltageRatioInputsList_VoltageRatioChangeTrigger = [1.0, 1.0, 1.0, 1.0]
+            self.VoltageRatioInputsList_VoltageRatioChangeTrigger = [1.0]*self.NumberOfWheatstoneBridges
 
         print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: VoltageRatioInputsList_VoltageRatioChangeTrigger: " + str(self.VoltageRatioInputsList_VoltageRatioChangeTrigger))
         #########################################################
@@ -469,13 +468,13 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         
         #########################################################
         #########################################################
-        if "DataCollectionDurationInSecondsForZeroingBridge" in setup_dict:
-            self.DataCollectionDurationInSecondsForZeroingBridge = self.PassThroughFloatValuesInRange_ExitProgramOtherwise("DataCollectionDurationInSecondsForZeroingBridge", setup_dict["DataCollectionDurationInSecondsForZeroingBridge"], 0.0, 60.0)
+        if "DataCollectionDurationInSecondsForSnapshottingBridge" in setup_dict:
+            self.DataCollectionDurationInSecondsForSnapshottingBridge = self.PassThroughFloatValuesInRange_ExitProgramOtherwise("DataCollectionDurationInSecondsForSnapshottingBridge", setup_dict["DataCollectionDurationInSecondsForSnapshottingBridge"], 0.0, 60.0)
 
         else:
-            self.DataCollectionDurationInSecondsForZeroingBridge = 1.0
+            self.DataCollectionDurationInSecondsForSnapshottingBridge = 1.0
 
-        print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: DataCollectionDurationInSecondsForZeroingBridge: " + str(self.DataCollectionDurationInSecondsForZeroingBridge))
+        print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: DataCollectionDurationInSecondsForSnapshottingBridge: " + str(self.DataCollectionDurationInSecondsForSnapshottingBridge))
         #########################################################
         #########################################################
 
@@ -504,7 +503,6 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
     
                 if LOWPASSFILTER_OPEN_FLAG != 1:
                     print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Failed to open LowPassFilter_ReubenPython2and3ClassObject.")
-                    self.OBJECT_CREATED_SUCCESSFULLY_FLAG = 0
                     return
 
         except:
@@ -551,7 +549,6 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
 
         except PhidgetException as e:
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Failed to call Device Information, Phidget Exception %i: %s" % (e.code, e.details))
-            self.OBJECT_CREATED_SUCCESSFULLY_FLAG = 0
             return
         #########################################################
         #########################################################
@@ -561,7 +558,6 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         if self.DesiredSerialNumber != -1: #'-1' means we should open the device regardless os serial number.
             if self.DetectedDeviceSerialNumber != self.DesiredSerialNumber:
                 print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: The desired Serial Number (" + str(self.DesiredSerialNumber) + ") does not match the detected serial number (" + str(self.DetectedDeviceSerialNumber) + ").")
-                self.OBJECT_CREATED_SUCCESSFULLY_FLAG = 0
                 return
         #########################################################
         #########################################################
@@ -603,8 +599,7 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
                         CallbackUpdateDeltaTmilliseconds = int(self.PassThroughFloatValuesInRange_ExitProgramOtherwise("VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds, VoltageRatioInputChannel " + str(VoltageRatioInputChannel), CallbackUpdateDeltaTmilliseconds_TEMP, self.CallbackUpdateDeltaTmilliseconds_MinimumValue, 1000.0))
                         self.VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds.append(CallbackUpdateDeltaTmilliseconds)
                 else:
-                    print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: ERROR, 'VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds' must be length " + str(len(self.NumberOfWheatstoneBridges)))
-                    self.OBJECT_CREATED_SUCCESSFULLY_FLAG = 0
+                    print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Error, 'VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds' must be length " + str(len(self.NumberOfWheatstoneBridges)))
                     return
             else:
                 self.VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds = [self.CallbackUpdateDeltaTmilliseconds_MinimumValue] * self.NumberOfWheatstoneBridges
@@ -614,7 +609,7 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
 
         except:
             exceptions = sys.exc_info()[0]
-            print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: ERROR, VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds parsing Exceptions: %s" % exceptions)
+            print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Error, VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds parsing Exceptions: %s" % exceptions)
         #########################################################
         #########################################################
 
@@ -626,7 +621,10 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
             for VoltageRatioInputChannel in range(0, self.NumberOfWheatstoneBridges):
                 print("Creating VoltageRatioInputChannel: " + str(VoltageRatioInputChannel))
                 self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects.append(VoltageRatioInput())
-                self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setDeviceSerialNumber(self.DesiredSerialNumber)
+
+                if self.DesiredSerialNumber != -1:
+                    self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setDeviceSerialNumber(self.DesiredSerialNumber)
+
                 self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setChannel(VoltageRatioInputChannel)
                 self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setOnAttachHandler(self.VoltageRatioInputsList_ListOfOnAttachCallbackFunctionNames[VoltageRatioInputChannel])
                 self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setOnDetachHandler(self.VoltageRatioInputsList_ListOfOnDetachCallbackFunctionNames[VoltageRatioInputChannel])
@@ -656,17 +654,23 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
                     print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Failed to enable Phidget Logging, Phidget Exception %i: %s" % (e.code, e.details))
             #########################################################
 
-            ##########################################
+            #########################################################
             self.MainThread_ThreadingObject = threading.Thread(target=self.MainThread, args=())
             self.MainThread_ThreadingObject.start()
-            ##########################################
+            #########################################################
 
-            ##########################################
+            #########################################################
             if self.USE_GUI_FLAG == 1:
                 self.StartGUI(self.root)
-            ##########################################
+            #########################################################
 
+            #########################################################
+            time.sleep(0.25)
+            #########################################################
+
+            #########################################################
             self.OBJECT_CREATED_SUCCESSFULLY_FLAG = 1
+            #########################################################
 
         #########################################################
         #########################################################
@@ -761,7 +765,7 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
     ##########################################################################################################
     ##########################################################################################################
 
-    ########################################################################################################## unicorn
+    ##########################################################################################################
     ##########################################################################################################
     def VoltageRatioInputGENERALonAttachCallback(self, VoltageRatioInputChannel):
 
@@ -780,7 +784,6 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
             self.VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds_ReceivedFromBoard[VoltageRatioInputChannel] = self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].getDataInterval()
             self.VoltageRatioInputsList_BridgeGain_ActualIntegerValue_ReceivedFromBoard[VoltageRatioInputChannel] = self.BridgeGain_SupportedValuesDict_PhidgetConstantsAsKeys[self.VoltageRatioInputsList_BridgeGain_PhidgetsConstant_ReceivedFromBoard[VoltageRatioInputChannel]]
             self.VoltageRatioInputsList_VoltageRatioChangeTrigger_ReceivedFromBoard[VoltageRatioInputChannel] = self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].getVoltageRatioChangeTrigger()
-
 
             self.MyPrint_WithoutLogFile("VoltageRatioInputGENERALonAttachCallback event, VoltageRatioInputChannel " +
                                         str(VoltageRatioInputChannel) +
@@ -840,13 +843,23 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         ################################
 
         ################################
-        if self.VoltageRatioInputsList_DataForZeroingBridge_EnableCollectionFlag[VoltageRatioInputChannel] == 1:
-            self.VoltageRatioInputsList_VoltageRatio_Raw_DataForZeroingBridgeQueue[VoltageRatioInputChannel].put(VoltageRatio)
+        RawWITHOUT_ZeroOffset_TEMP = VoltageRatio
+        self.VoltageRatioInputsList_VoltageRatio_Raw[VoltageRatioInputChannel] = RawWITHOUT_ZeroOffset_TEMP - self.VoltageRatioInputsList_VoltageRatio_Raw_ZeroOffsetValue[VoltageRatioInputChannel]
+
+        #We feed in "RawWITHOUT_ZeroOffset_TEMP" so that we can maintain a separate filtered vs raw zero value.
+        FilteredWITHOUT_ZeroOffset_TEMP = self.VoltageRatioInputsList_VoltageRatio_LowPassFilter_ReubenPython2and3ClassObject[VoltageRatioInputChannel].AddDataPointFromExternalProgram(RawWITHOUT_ZeroOffset_TEMP)["SignalOutSmoothed"]
+        self.VoltageRatioInputsList_VoltageRatio_Filtered[VoltageRatioInputChannel] = FilteredWITHOUT_ZeroOffset_TEMP - self.VoltageRatioInputsList_VoltageRatio_Filtered_ZeroOffsetValue[VoltageRatioInputChannel]
         ################################
 
-        ################################
-        self.VoltageRatioInputsList_VoltageRatio_Raw[VoltageRatioInputChannel] = VoltageRatio - self.VoltageRatioInputsList_VoltageRatio_Raw_ZeroOffsetValue[VoltageRatioInputChannel]
-        self.VoltageRatioInputsList_VoltageRatio_Filtered[VoltageRatioInputChannel] = self.VoltageRatioInputsList_VoltageRatio_LowPassFilter_ReubenPython2and3ClassObject[VoltageRatioInputChannel].AddDataPointFromExternalProgram(self.VoltageRatioInputsList_VoltageRatio_Raw[VoltageRatioInputChannel])["SignalOutSmoothed"]
+        ################################ unicorn
+        if self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag[VoltageRatioInputChannel] == 1:
+
+            if self.VoltageRatioInputsList_NeedsToBeZeroedFlag[VoltageRatioInputChannel] == 0: #Collecting data AS IS (without caring if we're trying to find the zero value).
+                self.VoltageRatioInputsList_VoltageRatio_Raw_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].put(self.VoltageRatioInputsList_VoltageRatio_Raw[VoltageRatioInputChannel])
+                self.VoltageRatioInputsList_VoltageRatio_Filtered_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].put(self.VoltageRatioInputsList_VoltageRatio_Filtered[VoltageRatioInputChannel])
+            else:
+                self.VoltageRatioInputsList_VoltageRatio_Raw_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].put(RawWITHOUT_ZeroOffset_TEMP)
+                self.VoltageRatioInputsList_VoltageRatio_Filtered_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].put(FilteredWITHOUT_ZeroOffset_TEMP)
         ################################
 
     ##########################################################################################################
@@ -1033,10 +1046,10 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
 
     ##########################################################################################################
     ##########################################################################################################
-    def StopCollectingDataForZeroingBridge(self, VoltageRatioInputChannel):
+    def StopCollectingDataForSnapshottingBridge(self, VoltageRatioInputChannel):
 
-        self.VoltageRatioInputsList_DataForZeroingBridge_EnableCollectionFlag[VoltageRatioInputChannel] = 2
-        self.MyPrint_WithoutLogFile("StopCollectingDataForZeroingBridge event fired for VoltageRatioInputChannel " + str(VoltageRatioInputChannel))
+        self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag[VoltageRatioInputChannel] = 2
+        self.MyPrint_WithoutLogFile("StopCollectingDataForSnapshottingBridge event fired for VoltageRatioInputChannel " + str(VoltageRatioInputChannel))
     ##########################################################################################################
     ##########################################################################################################
 
@@ -1044,13 +1057,45 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
     ##########################################################################################################
     def GetMostRecentDataDict(self):
 
-        self.MostRecentDataDict = dict([("VoltageRatioInputsList_VoltageRatio_Raw", self.VoltageRatioInputsList_VoltageRatio_Raw),
-                                        ("VoltageRatioInputsList_VoltageRatio_Filtered", self.VoltageRatioInputsList_VoltageRatio_Filtered),
-                                        ("VoltageRatioInputsList_ErrorCallbackFiredFlag", self.VoltageRatioInputsList_ErrorCallbackFiredFlag),
-                                        ("VoltageRatioInputsList_UpdateDeltaTseconds", self.VoltageRatioInputsList_UpdateDeltaTseconds),
-                                        ("Time", self.CurrentTime_CalculatedFromMainThread)])
+        if self.EXIT_PROGRAM_FLAG == 0:
 
-        return self.MostRecentDataDict
+            return deepcopy(self.MostRecentDataDict) #deepcopy IS required as MostRecentDataDict contains lists.
+
+        else:
+            return dict() #So that we're not returning variables during the close-down process.
+    ##########################################################################################################
+    ##########################################################################################################
+
+    ##########################################################################################################
+    ##########################################################################################################
+    def ZeroWheatstoneBridges(self, VoltageRatioInputChannelsList):
+        if self.IsInputList(VoltageRatioInputChannelsList) == 0:
+            VoltageRatioInputChannelsList = list([VoltageRatioInputChannelsList])
+
+        for VoltageRatioInputChannel in VoltageRatioInputChannelsList:
+            if VoltageRatioInputChannel not in range(0, self.NumberOfWheatstoneBridges):
+                print("ZeroWheatstoneBridges ERROR: Channel " + str(VoltageRatioInputChannel) + " not in the range " + str(list(range(0, self.NumberOfWheatstoneBridges))) + ".")
+            else:
+                self.VoltageRatioInputsList_NeedsToBeZeroedFlag[VoltageRatioInputChannel] = 1
+                #self.MyPrint_WithoutLogFile("ZeroWheatstoneBridges: Issuing command to zero Channel " + str(VoltageRatioInputChannel))
+
+    ##########################################################################################################
+    ##########################################################################################################
+
+    ##########################################################################################################
+    ##########################################################################################################
+    def SnapshotDataFromWheatstoneBridges(self, VoltageRatioInputChannelsList):
+
+        if self.IsInputList(VoltageRatioInputChannelsList) == 0:
+            VoltageRatioInputChannelsList = list([VoltageRatioInputChannelsList])
+
+        for ForLoopIndex, VoltageRatioInputChannel in enumerate(VoltageRatioInputChannelsList):
+
+            if VoltageRatioInputChannel not in range(0, self.NumberOfWheatstoneBridges):
+                print("SnapshotDataFromWheatstoneBridges ERROR: Channel " + str(VoltageRatioInputChannel) + " not in the range " + str(list(range(0, self.NumberOfWheatstoneBridges))) + ".")
+            else:
+                self.VoltageRatioInputsList_NeedsToBeSnapshottedFlag[VoltageRatioInputChannel] = 1
+                #self.MyPrint_WithoutLogFile("SnapshotDataFromWheatstoneBridges: Issuing command to snapshot Channel " + str(VoltageRatioInputChannel))
     ##########################################################################################################
     ##########################################################################################################
 
@@ -1092,6 +1137,8 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
     ##########################################################################################################
 
     ##########################################################################################################
+    ##########################################################################################################
+    ##########################################################################################################
     ########################################################################################################## unicorn
     def MainThread(self):
 
@@ -1101,66 +1148,143 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
 
         self.StartingTime_CalculatedFromMainThread = self.getPreciseSecondsTimeStampString()
 
-        ###############################################
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
         while self.EXIT_PROGRAM_FLAG == 0:
 
-            ###############################################
+            ##########################################################################################################
+            ##########################################################################################################
             self.CurrentTime_CalculatedFromMainThread = self.getPreciseSecondsTimeStampString() - self.StartingTime_CalculatedFromMainThread
-            ###############################################
+            ##########################################################################################################
+            ##########################################################################################################
 
-            ###############################################
+            ##########################################################################################################
+            ##########################################################################################################
+            self.MostRecentDataDict = dict([("VoltageRatioInputsList_VoltageRatio_Raw", self.VoltageRatioInputsList_VoltageRatio_Raw),
+                                            ("VoltageRatioInputsList_VoltageRatio_Filtered", self.VoltageRatioInputsList_VoltageRatio_Filtered),
+                                            ("VoltageRatioInputsList_ErrorCallbackFiredFlag", self.VoltageRatioInputsList_ErrorCallbackFiredFlag),
+                                            ("VoltageRatioInputsList_UpdateDeltaTseconds", self.VoltageRatioInputsList_UpdateDeltaTseconds),
+                                            ("Time", self.CurrentTime_CalculatedFromMainThread)])
+            ##########################################################################################################
+            ##########################################################################################################
+
+            ##########################################################################################################
+            ##########################################################################################################
             for VoltageRatioInputChannel, NeedsToBeZeroedFlag in enumerate(self.VoltageRatioInputsList_NeedsToBeZeroedFlag):
 
                 if NeedsToBeZeroedFlag == 1:
-                    if self.VoltageRatioInputsList_DataForZeroingBridge_EnableCollectionFlag[VoltageRatioInputChannel] == 0:
-                        print("Starting to collect data to zero channel " + str(VoltageRatioInputChannel))
-                        self.VoltageRatioInputsList_DataForZeroingBridge_EnableCollectionFlag[VoltageRatioInputChannel] = 1
-                        self.TimerCallbackFunctionWithFunctionAsArgument_SingleShot_NoParenthesesAfterFunctionName(self.DataCollectionDurationInSecondsForZeroingBridge, self.StopCollectingDataForZeroingBridge, [VoltageRatioInputChannel])
+                    if self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag[VoltageRatioInputChannel] == 0:
+                        #print("Starting to collect data to Snapshot (FOR ZEROING) channel " + str(VoltageRatioInputChannel))
+                        self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag[VoltageRatioInputChannel] = 1
+                        self.TimerCallbackFunctionWithFunctionAsArgument_SingleShot_NoParenthesesAfterFunctionName(self.DataCollectionDurationInSecondsForSnapshottingBridge, self.StopCollectingDataForSnapshottingBridge, [VoltageRatioInputChannel])
 
-                    elif self.VoltageRatioInputsList_DataForZeroingBridge_EnableCollectionFlag[VoltageRatioInputChannel] == 1:
+                    elif self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag[VoltageRatioInputChannel] == 1:
                         pass
 
                     else: #Like 2
-                        print("Computing average for channel " + str(VoltageRatioInputChannel))
-                        self.VoltageRatioInputsList_DataForZeroingBridge_EnableCollectionFlag[VoltageRatioInputChannel] = 0
+                        #print("Computing average for channel " + str(VoltageRatioInputChannel))
+                        self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag[VoltageRatioInputChannel] = 0
 
-                        Sum = 0.0
+                        Sum_Raw = 0.0
+                        Sum_Filtered = 0.0
                         Counter = 0.0
-                        while self.VoltageRatioInputsList_VoltageRatio_Raw_DataForZeroingBridgeQueue[VoltageRatioInputChannel].qsize() > 0:
-                            Sum = Sum + self.VoltageRatioInputsList_VoltageRatio_Raw_DataForZeroingBridgeQueue[VoltageRatioInputChannel].get()
+                        while self.VoltageRatioInputsList_VoltageRatio_Raw_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].qsize() > 0:
+                            Sum_Raw = Sum_Raw + self.VoltageRatioInputsList_VoltageRatio_Raw_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].get()
+                            Sum_Filtered = Sum_Filtered + self.VoltageRatioInputsList_VoltageRatio_Filtered_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].get()
                             Counter = Counter + 1
 
                         if Counter > 0:
-                            Average = Sum/Counter
-                            self.VoltageRatioInputsList_VoltageRatio_Raw_ZeroOffsetValue[VoltageRatioInputChannel] = Average
+                            Average_Raw = Sum_Raw/Counter
+                            Average_Filtered = Sum_Filtered/Counter
+                            self.VoltageRatioInputsList_VoltageRatio_Raw_SnapshottedValue[VoltageRatioInputChannel] = Average_Raw
+                            self.VoltageRatioInputsList_VoltageRatio_Filtered_SnapshottedValue[VoltageRatioInputChannel] = Average_Filtered
                         else:
-                            self.VoltageRatioInputsList_VoltageRatio_Raw_ZeroOffsetValue[VoltageRatioInputChannel] = -11111.0
+                            self.VoltageRatioInputsList_VoltageRatio_Raw_SnapshottedValue[VoltageRatioInputChannel] = -11111.0
+                            self.VoltageRatioInputsList_VoltageRatio_Filtered_SnapshottedValue[VoltageRatioInputChannel] = -11111.0
+
+                        self.VoltageRatioInputsList_VoltageRatio_Raw_ZeroOffsetValue[VoltageRatioInputChannel]  = self.VoltageRatioInputsList_VoltageRatio_Raw_SnapshottedValue[VoltageRatioInputChannel]
+                        self.VoltageRatioInputsList_VoltageRatio_Filtered_ZeroOffsetValue[VoltageRatioInputChannel]  = self.VoltageRatioInputsList_VoltageRatio_Filtered_SnapshottedValue[VoltageRatioInputChannel]
+
+                        self.MyPrint_WithoutLogFile("self.VoltageRatioInputsList_VoltageRatio_Raw_ZeroOffsetValue for channel " + str(VoltageRatioInputChannel) +
+                                                    ":" + str(self.VoltageRatioInputsList_VoltageRatio_Raw_ZeroOffsetValue[VoltageRatioInputChannel]) +
+                                                    ", self.VoltageRatioInputsList_VoltageRatio_Filtered_ZeroOffsetValue for channel " + str(VoltageRatioInputChannel) +
+                                                    ":" + str(self.VoltageRatioInputsList_VoltageRatio_Filtered_ZeroOffsetValue[VoltageRatioInputChannel]))
 
                         self.VoltageRatioInputsList_NeedsToBeZeroedFlag[VoltageRatioInputChannel] = 0
-            ###############################################
 
-            ############################################### USE THE TIME.SLEEP() TO SET THE LOOP FREQUENCY
-            ###############################################
-            ###############################################
+            ##########################################################################################################
+            ##########################################################################################################
+            
+            ##########################################################################################################
+            ##########################################################################################################
+            for VoltageRatioInputChannel, NeedsToBeSnapshottedFlag in enumerate(self.VoltageRatioInputsList_NeedsToBeSnapshottedFlag):
+
+                if NeedsToBeSnapshottedFlag == 1:
+                    if self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag[VoltageRatioInputChannel] == 0:
+                        #print("Starting to collect data to Snapshot channel " + str(VoltageRatioInputChannel))
+                        self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag[VoltageRatioInputChannel] = 1
+                        self.TimerCallbackFunctionWithFunctionAsArgument_SingleShot_NoParenthesesAfterFunctionName(self.DataCollectionDurationInSecondsForSnapshottingBridge, self.StopCollectingDataForSnapshottingBridge, [VoltageRatioInputChannel])
+
+                    elif self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag[VoltageRatioInputChannel] == 1:
+                        pass
+
+                    else: #Like 2
+                        #print("Computing average for channel " + str(VoltageRatioInputChannel))
+                        self.VoltageRatioInputsList_DataForSnapshottingBridge_EnableCollectionFlag[VoltageRatioInputChannel] = 0
+
+                        Sum_Raw = 0.0
+                        Sum_Filtered = 0.0
+                        Counter = 0.0
+                        while self.VoltageRatioInputsList_VoltageRatio_Raw_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].qsize() > 0:
+                            Sum_Raw = Sum_Raw + self.VoltageRatioInputsList_VoltageRatio_Raw_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].get()
+                            Sum_Filtered = Sum_Filtered + self.VoltageRatioInputsList_VoltageRatio_Filtered_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].get()
+                            Counter = Counter + 1
+
+                        if Counter > 0:
+                            Average_Raw = Sum_Raw/Counter
+                            Average_Filtered = Sum_Filtered/Counter
+                            self.VoltageRatioInputsList_VoltageRatio_Raw_SnapshottedValue[VoltageRatioInputChannel] = Average_Raw
+                            self.VoltageRatioInputsList_VoltageRatio_Filtered_SnapshottedValue[VoltageRatioInputChannel] = Average_Filtered
+                        else:
+                            self.VoltageRatioInputsList_VoltageRatio_Raw_SnapshottedValue[VoltageRatioInputChannel] = -11111.0
+                            self.VoltageRatioInputsList_VoltageRatio_Filtered_SnapshottedValue[VoltageRatioInputChannel] = -11111.0
+
+                        self.MyPrint_WithoutLogFile("self.VoltageRatioInputsList_VoltageRatio_Raw_SnapshottedValue for channel " + str(VoltageRatioInputChannel) +
+                                                    ":" + str(self.VoltageRatioInputsList_VoltageRatio_Raw_SnapshottedValue[VoltageRatioInputChannel]) +
+                                                    ", self.VoltageRatioInputsList_VoltageRatio_Filtered_SnapshottedValue for channel " + str(VoltageRatioInputChannel) +
+                                                    ":" + str(self.VoltageRatioInputsList_VoltageRatio_Filtered_SnapshottedValue[VoltageRatioInputChannel]))
+                        
+                        self.VoltageRatioInputsList_NeedsToBeSnapshottedFlag[VoltageRatioInputChannel] = 0
+            ##########################################################################################################
+            ##########################################################################################################
+            
+            ########################################################################################################## USE THE TIME.SLEEP() TO SET THE LOOP FREQUENCY
+            ##########################################################################################################
             self.UpdateFrequencyCalculation_MainThread()
 
             if self.MainThread_TimeToSleepEachLoop > 0.0:
                 time.sleep(self.MainThread_TimeToSleepEachLoop)
+            ##########################################################################################################
+            ##########################################################################################################
 
-            ###############################################
-            ###############################################
-            ###############################################
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
 
-        ###############################################
-
-        ###############################################
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
         for VoltageRatioInput_Object in self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects:
             VoltageRatioInput_Object.close()
-        ###############################################
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
 
         self.MyPrint_WithoutLogFile("Finished MainThread for Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class object.")
-        
         self.MainThread_still_running_flag = 0
+    ##########################################################################################################
+    ##########################################################################################################
     ##########################################################################################################
     ##########################################################################################################
 
@@ -1177,35 +1301,24 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
 
     ##########################################################################################################
     ##########################################################################################################
-    def StartGUI(self, GuiParent=None):
+    def StartGUI(self, GuiParent):
 
-        GUI_Thread_ThreadingObject = threading.Thread(target=self.GUI_Thread, args=(GuiParent,))
-        GUI_Thread_ThreadingObject.setDaemon(True) #Should mean that the GUI thread is destroyed automatically when the main thread is destroyed.
-        GUI_Thread_ThreadingObject.start()
+        self.GUI_Thread_ThreadingObject = threading.Thread(target=self.GUI_Thread, args=(GuiParent,))
+        self.GUI_Thread_ThreadingObject.setDaemon(True) #Should mean that the GUI thread is destroyed automatically when the main thread is destroyed.
+        self.GUI_Thread_ThreadingObject.start()
     ##########################################################################################################
     ##########################################################################################################
 
     ##########################################################################################################
     ##########################################################################################################
-    def GUI_Thread(self, parent=None):
+    def GUI_Thread(self, parent):
 
         print("Starting the GUI_Thread for Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class object.")
 
         ###################################################
         ###################################################
-        if parent == None:  #This class object owns root and must handle it properly
-            self.root = Tk()
-            self.parent = self.root
-
-            ################################################### SET THE DEFAULT FONT FOR ALL WIDGETS CREATED AFTTER/BELOW THIS CALL
-            default_font = tkFont.nametofont("TkDefaultFont")
-            default_font.configure(size=8)
-            self.root.option_add("*Font", default_font)
-            ###################################################
-
-        else:
-            self.root = parent
-            self.parent = parent
+        self.root = parent
+        self.parent = parent
         ###################################################
         ###################################################
 
@@ -1257,10 +1370,23 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         self.ZeroingButtonsFrame = Frame(self.myFrame)
         self.ZeroingButtonsFrame.grid(row = 1, column = 0, padx = 1, pady = 1, rowspan = 1, columnspan = 1)
 
+        ###################################################
         self.VoltageRatioInputsList_ZeroingButtonObjects = []
         for VoltageRatioInputChannel in range(0, self.NumberOfWheatstoneBridges):
             self.VoltageRatioInputsList_ZeroingButtonObjects.append(Button(self.ZeroingButtonsFrame, text="Zero Bridge " + str(VoltageRatioInputChannel), state="normal", width=15, command=lambda i=VoltageRatioInputChannel: self.VoltageRatioInputsList_ZeroingButtonObjectsResponse(i)))
             self.VoltageRatioInputsList_ZeroingButtonObjects[VoltageRatioInputChannel].grid(row=1, column=VoltageRatioInputChannel, padx=1, pady=1)
+        ###################################################
+
+        ###################################################
+        self.ZeroAllWheatstoneBridges_Button = Button(self.ZeroingButtonsFrame, text="Zero All Data", state="normal", width=15, command=lambda i=1: self.ZeroAllWheatstoneBridges_ButtonResponse())
+        self.ZeroAllWheatstoneBridges_Button.grid(row=2, column=0, padx=1, pady=1, rowspan=1, columnspan=1)
+        ###################################################
+
+        ###################################################
+        self.SnapshotDataFromWheatstoneBridges_Button = Button(self.ZeroingButtonsFrame, text="Snapshot All Data", state="normal", width=15, command=lambda i=1: self.SnapshotDataFromWheatstoneBridges_ButtonResponse())
+        self.SnapshotDataFromWheatstoneBridges_Button.grid(row=2, column=1, padx=1, pady=1, rowspan=1, columnspan=1)
+        ###################################################
+
         ###################################################
         ###################################################
 
@@ -1274,22 +1400,7 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
 
         ###################################################
         ###################################################
-        if self.RootIsOwnedExternallyFlag == 0: #This class object owns root and must handle it properly
-            self.root.protocol("WM_DELETE_WINDOW", self.ExitProgram_Callback)
-
-            self.root.after(self.GUI_RootAfterCallbackInterval_Milliseconds, self.GUI_update_clock)
-            self.GUI_ready_to_be_updated_flag = 1
-            self.root.mainloop()
-        else:
-            self.GUI_ready_to_be_updated_flag = 1
-        ###################################################
-        ###################################################
-
-        ###################################################
-        ###################################################
-        if self.RootIsOwnedExternallyFlag == 0: #This class object owns root and must handle it properly
-            self.root.quit()  # Stop the GUI thread, MUST BE CALLED FROM GUI_Thread
-            self.root.destroy()  # Close down the GUI thread, MUST BE CALLED FROM GUI_Thread
+        self.GUI_ready_to_be_updated_flag = 1
         ###################################################
         ###################################################
 
@@ -1315,10 +1426,28 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
                 #######################################################
                 try:
                     #######################################################
-                    ZeroValsTextToDisplay = "["
+
+                    ##################
+                    ZeroValsTextToDisplay_Raw = "["
+                    ZeroValsTextToDisplay_Filtered = "["
                     for VoltageRatioInputChannel in range(0, self.NumberOfWheatstoneBridges):
-                        ZeroValsTextToDisplay = ZeroValsTextToDisplay + str(self.VoltageRatioInputsList_VoltageRatio_Raw_ZeroOffsetValue[VoltageRatioInputChannel]) + ",\n"
-                    ZeroValsTextToDisplay = ZeroValsTextToDisplay[:-2] + "]"
+                        ZeroValsTextToDisplay_Raw = ZeroValsTextToDisplay_Raw + str(self.VoltageRatioInputsList_VoltageRatio_Raw_ZeroOffsetValue[VoltageRatioInputChannel]) + ",\n"
+                        ZeroValsTextToDisplay_Filtered = ZeroValsTextToDisplay_Filtered + str(self.VoltageRatioInputsList_VoltageRatio_Filtered_ZeroOffsetValue[VoltageRatioInputChannel]) + ",\n"
+
+                    ZeroValsTextToDisplay_Raw = ZeroValsTextToDisplay_Raw[:-2] + "]"
+                    ZeroValsTextToDisplay_Filtered = ZeroValsTextToDisplay_Filtered[:-2] + "]"
+                    ##################
+
+                    ##################
+                    SnapshottedValsTextToDisplay_Raw = "["
+                    SnapshottedValsTextToDisplay_Filtered = "["
+                    for VoltageRatioInputChannel in range(0, self.NumberOfWheatstoneBridges):
+                        SnapshottedValsTextToDisplay_Raw = SnapshottedValsTextToDisplay_Raw + str(self.VoltageRatioInputsList_VoltageRatio_Raw_SnapshottedValue[VoltageRatioInputChannel]) + ",\n"
+                        SnapshottedValsTextToDisplay_Filtered = SnapshottedValsTextToDisplay_Filtered + str(self.VoltageRatioInputsList_VoltageRatio_Filtered_SnapshottedValue[VoltageRatioInputChannel]) + ",\n"
+
+                    SnapshottedValsTextToDisplay_Raw = SnapshottedValsTextToDisplay_Raw[:-2] + "]"
+                    SnapshottedValsTextToDisplay_Filtered = SnapshottedValsTextToDisplay_Filtered[:-2] + "]"
+                    ##################
 
                     self.DeviceInfoLabel["text"] = self.NameToDisplay_UserSet + \
                                                     "\nDevice Name: " + self.DetectedDeviceName + \
@@ -1331,22 +1460,25 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
                                                     "\nCallback DeltaT ms: " + str(self.VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds_ReceivedFromBoard) + \
                                                     "\nChangeTrigger: " + str(self.VoltageRatioInputsList_VoltageRatioChangeTrigger_ReceivedFromBoard) + \
                                                     "\nEnabledState: " + str(self.VoltageRatioInputsList_EnabledStateBoolean_ReceivedFromBoard) + \
-                                                    "\nZeroVals: " + ZeroValsTextToDisplay
+                                                    "\nZeroVals, Raw: " + ZeroValsTextToDisplay_Raw + \
+                                                    "\nSnapshottedVals, Raw: " + SnapshottedValsTextToDisplay_Raw + \
+                                                    "\nZeroVals, Filtered: " + ZeroValsTextToDisplay_Filtered + \
+                                                    "\nSnapshottedVals, Filtered:: " + SnapshottedValsTextToDisplay_Filtered
 
                     #######################################################
 
                     #######################################################
-                    DataForZeroingBridgeQueue_QsizeTextToDisplay = "["
+                    DataForSnapshottingBridgeQueue_QsizeTextToDisplay = "["
                     for VoltageRatioInputChannel in range(0, self.NumberOfWheatstoneBridges):
-                        DataForZeroingBridgeQueue_QsizeTextToDisplay = DataForZeroingBridgeQueue_QsizeTextToDisplay + str(self.VoltageRatioInputsList_VoltageRatio_Raw_DataForZeroingBridgeQueue[VoltageRatioInputChannel].qsize()) + ", "
-                    DataForZeroingBridgeQueue_QsizeTextToDisplay = DataForZeroingBridgeQueue_QsizeTextToDisplay[:-2] + "]"
+                        DataForSnapshottingBridgeQueue_QsizeTextToDisplay = DataForSnapshottingBridgeQueue_QsizeTextToDisplay + str(self.VoltageRatioInputsList_VoltageRatio_Raw_DataForSnapshottingBridgeQueue[VoltageRatioInputChannel].qsize()) + ", "
+                    DataForSnapshottingBridgeQueue_QsizeTextToDisplay = DataForSnapshottingBridgeQueue_QsizeTextToDisplay[:-2] + "]"
 
                     self.VoltageRatioInputs_Label["text"] = "VoltageRati, Raw: " + str(self.VoltageRatioInputsList_VoltageRatio_Raw) + \
                                                 "\nVoltageRatio, Filtered: " + self.ConvertFloatToStringWithNumberOfLeadingNumbersAndDecimalPlaces_NumberOrListInput(self.VoltageRatioInputsList_VoltageRatio_Filtered, 0, 5) + \
                                                 "\nUpdateDeltaTseconds: " + self.ConvertFloatToStringWithNumberOfLeadingNumbersAndDecimalPlaces_NumberOrListInput(self.VoltageRatioInputsList_OnVoltageRatioChangeCallback_DataStreamingDeltaT, 0, 5) + \
                                                 "\nTime: " + self.ConvertFloatToStringWithNumberOfLeadingNumbersAndDecimalPlaces_NumberOrListInput(self.CurrentTime_CalculatedFromMainThread, 0, 3) + \
                                                 "\nMain Thread Frequency: " + self.ConvertFloatToStringWithNumberOfLeadingNumbersAndDecimalPlaces_NumberOrListInput(self.DataStreamingFrequency_CalculatedFromMainThread, 0, 3) + \
-                                                "\nDataForZeroingBridgeQueue.qsize(): " + DataForZeroingBridgeQueue_QsizeTextToDisplay
+                                                "\nDataForSnapshottingBridgeQueue.qsize(): " + DataForSnapshottingBridgeQueue_QsizeTextToDisplay
 
                     #######################################################
 
@@ -1361,13 +1493,6 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
                 #######################################################
                 #######################################################
 
-                #######################################################
-                #######################################################
-                if self.RootIsOwnedExternallyFlag == 0:  # This class object owns root and must handle it properly
-                    self.root.after(self.GUI_RootAfterCallbackInterval_Milliseconds, self.GUI_update_clock)
-                #######################################################
-                #######################################################
-
             #######################################################
             #######################################################
             #######################################################
@@ -1377,56 +1502,6 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         #######################################################
         #######################################################
 
-    ##########################################################################################################
-    ##########################################################################################################
-
-    ##########################################################################################################
-    ##########################################################################################################
-    def IsInputList(self, InputToCheck):
-
-        result = isinstance(InputToCheck, list)
-        return result
-    ##########################################################################################################
-    ##########################################################################################################
-
-    ##########################################################################################################
-    ##########################################################################################################
-    def ConvertFloatToStringWithNumberOfLeadingNumbersAndDecimalPlaces_NumberOrListInput(self, input, number_of_leading_numbers=4, number_of_decimal_places=3):
-        IsListFlag = self.IsInputList(input)
-
-        if IsListFlag == 0:
-            float_number_list = [input]
-        else:
-            float_number_list = list(input)
-
-        float_number_list_as_strings = []
-        for element in float_number_list:
-            try:
-                element = float(element)
-                prefix_string = "{:." + str(number_of_decimal_places) + "f}"
-                element_as_string = prefix_string.format(element)
-                float_number_list_as_strings.append(element_as_string)
-            except:
-                self.MyPrint_WithoutLogFile(self.TellWhichFileWereIn() + ": ConvertFloatToStringWithNumberOfLeadingNumbersAndDecimalPlaces_NumberOrListInput ERROR: " + str(element) + " cannot be turned into a float")
-                return -1
-
-        StringToReturn = ""
-        if IsListFlag == 0:
-            StringToReturn = float_number_list_as_strings[0].zfill(number_of_leading_numbers + number_of_decimal_places + 1 + 1)  # +1 for sign, +1 for decimal place
-        else:
-            StringToReturn = "["
-            for index, StringElement in enumerate(float_number_list_as_strings):
-                if float_number_list[index] >= 0:
-                    StringElement = "+" + StringElement  # So that our strings always have either + or - signs to maintain the same string length
-
-                StringElement = StringElement.zfill(number_of_leading_numbers + number_of_decimal_places + 1 + 1)  # +1 for sign, +1 for decimal place
-
-                if index != len(float_number_list_as_strings) - 1:
-                    StringToReturn = StringToReturn + StringElement + ", "
-                else:
-                    StringToReturn = StringToReturn + StringElement + "]"
-
-        return StringToReturn
     ##########################################################################################################
     ##########################################################################################################
 
@@ -1434,8 +1509,30 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
     ##########################################################################################################
     def VoltageRatioInputsList_ZeroingButtonObjectsResponse(self, VoltageRatioInputChannelNumber):
 
-        self.VoltageRatioInputsList_NeedsToBeZeroedFlag[VoltageRatioInputChannelNumber] = 1
+        self.ZeroWheatstoneBridges([VoltageRatioInputChannelNumber])
         #self.MyPrint_WithoutLogFile("VoltageRatioInputsList_ZeroingButtonObjectsResponse: Event fired for VoltageRatioInputChannelNumber " + str(VoltageRatioInputChannelNumber))
+
+    ##########################################################################################################
+    ##########################################################################################################
+
+    ##########################################################################################################
+    ##########################################################################################################
+    def ZeroAllWheatstoneBridges_ButtonResponse(self):
+
+        self.VoltageRatioInputsList_NeedsToBeZeroedFlag = [1]*self.NumberOfWheatstoneBridges
+
+        #self.MyPrint_WithoutLogFile("ZeroAllWheatstoneBridges_ButtonResponse: Event fired for VoltageRatioInputChannelNumber " + str(VoltageRatioInputChannelNumber))
+
+    ##########################################################################################################
+    ##########################################################################################################
+
+    ##########################################################################################################
+    ##########################################################################################################
+    def SnapshotDataFromWheatstoneBridges_ButtonResponse(self):
+
+        self.VoltageRatioInputsList_NeedsToBeSnapshottedFlag = [1]*self.NumberOfWheatstoneBridges
+
+        #self.MyPrint_WithoutLogFile("SnapshotDataFromWheatstoneBridges_ButtonResponse: Event fired for VoltageRatioInputChannelNumber " + str(VoltageRatioInputChannelNumber))
 
     ##########################################################################################################
     ##########################################################################################################
@@ -1481,6 +1578,177 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
                     self.PrintToGui_Label_TextInput_Str = self.PrintToGui_Label_TextInput_Str + "\n"
             ################################
 
+    ##########################################################################################################
+    ##########################################################################################################
+
+    ##########################################################################################################
+    ##########################################################################################################
+    def IsInputList(self, InputToCheck):
+
+        result = isinstance(InputToCheck, list)
+        return result
+    ##########################################################################################################
+    ##########################################################################################################
+
+    ##########################################################################################################
+    ##########################################################################################################
+    ##########################################################################################################
+    ##########################################################################################################
+    def ConvertFloatToStringWithNumberOfLeadingNumbersAndDecimalPlaces_NumberOrListInput(self, input, number_of_leading_numbers = 4, number_of_decimal_places = 3):
+
+        number_of_decimal_places = max(1, number_of_decimal_places) #Make sure we're above 1
+
+        ListOfStringsToJoin = []
+
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+        if isinstance(input, str) == 1:
+            ListOfStringsToJoin.append(input)
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+        elif isinstance(input, int) == 1 or isinstance(input, float) == 1:
+            element = float(input)
+            prefix_string = "{:." + str(number_of_decimal_places) + "f}"
+            element_as_string = prefix_string.format(element)
+
+            ##########################################################################################################
+            ##########################################################################################################
+            if element >= 0:
+                element_as_string = element_as_string.zfill(number_of_leading_numbers + number_of_decimal_places + 1 + 1)  # +1 for sign, +1 for decimal place
+                element_as_string = "+" + element_as_string  # So that our strings always have either + or - signs to maintain the same string length
+            else:
+                element_as_string = element_as_string.zfill(number_of_leading_numbers + number_of_decimal_places + 1 + 1 + 1)  # +1 for sign, +1 for decimal place
+            ##########################################################################################################
+            ##########################################################################################################
+
+            ListOfStringsToJoin.append(element_as_string)
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+        elif isinstance(input, list) == 1:
+
+            if len(input) > 0:
+                for element in input: #RECURSION
+                    ListOfStringsToJoin.append(self.ConvertFloatToStringWithNumberOfLeadingNumbersAndDecimalPlaces_NumberOrListInput(element, number_of_leading_numbers, number_of_decimal_places))
+
+            else: #Situation when we get a list() or []
+                ListOfStringsToJoin.append(str(input))
+
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+        elif isinstance(input, tuple) == 1:
+
+            if len(input) > 0:
+                for element in input: #RECURSION
+                    ListOfStringsToJoin.append("TUPLE" + self.ConvertFloatToStringWithNumberOfLeadingNumbersAndDecimalPlaces_NumberOrListInput(element, number_of_leading_numbers, number_of_decimal_places))
+
+            else: #Situation when we get a list() or []
+                ListOfStringsToJoin.append(str(input))
+
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+        elif isinstance(input, dict) == 1:
+
+            if len(input) > 0:
+                for Key in input: #RECURSION
+                    ListOfStringsToJoin.append(str(Key) + ": " + self.ConvertFloatToStringWithNumberOfLeadingNumbersAndDecimalPlaces_NumberOrListInput(input[Key], number_of_leading_numbers, number_of_decimal_places))
+
+            else: #Situation when we get a dict()
+                ListOfStringsToJoin.append(str(input))
+
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+        else:
+            ListOfStringsToJoin.append(str(input))
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+        if len(ListOfStringsToJoin) > 1:
+
+            ##########################################################################################################
+            ##########################################################################################################
+
+            ##########################################################################################################
+            StringToReturn = ""
+            for Index, StringToProcess in enumerate(ListOfStringsToJoin):
+
+                ################################################
+                if Index == 0: #The first element
+                    if StringToProcess.find(":") != -1 and StringToProcess[0] != "{": #meaning that we're processing a dict()
+                        StringToReturn = "{"
+                    elif StringToProcess.find("TUPLE") != -1 and StringToProcess[0] != "(":  # meaning that we're processing a tuple
+                        StringToReturn = "("
+                    else:
+                        StringToReturn = "["
+
+                    StringToReturn = StringToReturn + StringToProcess.replace("TUPLE","") + ", "
+                ################################################
+
+                ################################################
+                elif Index < len(ListOfStringsToJoin) - 1: #The middle elements
+                    StringToReturn = StringToReturn + StringToProcess + ", "
+                ################################################
+
+                ################################################
+                else: #The last element
+                    StringToReturn = StringToReturn + StringToProcess
+
+                    if StringToProcess.find(":") != -1 and StringToProcess[-1] != "}":  # meaning that we're processing a dict()
+                        StringToReturn = StringToReturn + "}"
+                    elif StringToProcess.find("TUPLE") != -1 and StringToProcess[-1] != ")":  # meaning that we're processing a tuple
+                        StringToReturn = StringToReturn + ")"
+                    else:
+                        StringToReturn = StringToReturn + "]"
+
+                ################################################
+
+            ##########################################################################################################
+
+            ##########################################################################################################
+            ##########################################################################################################
+
+        elif len(ListOfStringsToJoin) == 1:
+            StringToReturn = ListOfStringsToJoin[0]
+
+        else:
+            StringToReturn = ListOfStringsToJoin
+
+        return StringToReturn
+        ##########################################################################################################
+        ##########################################################################################################
+        ##########################################################################################################
+
+    ##########################################################################################################
+    ##########################################################################################################
     ##########################################################################################################
     ##########################################################################################################
 

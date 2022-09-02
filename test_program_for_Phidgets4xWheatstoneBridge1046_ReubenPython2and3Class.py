@@ -6,23 +6,30 @@ reuben.brewer@gmail.com
 www.reubotics.com
 
 Apache 2 License
-Software Revision A, 05/23/2022
+Software Revision B, 08/29/2022
 
 Verified working on: Python 2.7, 3.8 for Windows 8.1, 10 64-bit and Raspberry Pi Buster (no Mac testing yet).
 '''
 
 __author__ = 'reuben.brewer'
 
+###########################################################
 from Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class import *
 from MyPrint_ReubenPython2and3Class import *
 from MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class import *
+###########################################################
 
-import os, sys, platform
-import time, datetime
+###########################################################
+import os
+import sys
+import platform
+import time
+import datetime
 import threading
 import collections
+###########################################################
 
-###############
+###########################################################
 if sys.version_info[0] < 3:
     from Tkinter import * #Python 2
     import tkFont
@@ -31,22 +38,15 @@ else:
     from tkinter import * #Python 3
     import tkinter.font as tkFont #Python 3
     from tkinter import ttk
-###############
+###########################################################
 
-###############
-if sys.version_info[0] < 3:
-    from builtins import raw_input as input
-else:
-    from future.builtins import input as input #"sudo pip3 install future" (Python 3) AND "sudo pip install future" (Python 2)
-###############
-
-###############
+###########################################################
 import platform
 if platform.system() == "Windows":
     import ctypes
     winmm = ctypes.WinDLL('winmm')
     winmm.timeBeginPeriod(1) #Set minimum timer resolution to 1ms so that time.sleep(0.001) behaves properly.
-###############
+###########################################################
 
 ###########################################################################################################
 ##########################################################################################################
@@ -172,11 +172,11 @@ def GUI_Thread():
         #################################################
         TabControlObject = ttk.Notebook(root)
 
-        Tab_MainControls = ttk.Frame(TabControlObject)
-        TabControlObject.add(Tab_MainControls, text='   Main Controls   ')
-
         Tab_WheatstoneBridge = ttk.Frame(TabControlObject)
         TabControlObject.add(Tab_WheatstoneBridge, text='   WheatstoneBridge   ')
+
+        Tab_MainControls = ttk.Frame(TabControlObject)
+        TabControlObject.add(Tab_MainControls, text='   Main Controls   ')
 
         Tab_MyPrint = ttk.Frame(TabControlObject)
         TabControlObject.add(Tab_MyPrint, text='   MyPrint Terminal   ')
@@ -253,7 +253,7 @@ if __name__ == '__main__':
     USE_GUI_FLAG = 1
 
     global USE_TABS_IN_GUI_FLAG
-    USE_TABS_IN_GUI_FLAG = 0
+    USE_TABS_IN_GUI_FLAG = 1
 
     global USE_WheatstoneBridge_FLAG
     USE_WheatstoneBridge_FLAG = 1
@@ -288,7 +288,7 @@ if __name__ == '__main__':
 
     GUI_COLUMN_WheatstoneBridge = 0
     GUI_PADX_WheatstoneBridge = 1
-    GUI_PADY_WheatstoneBridge = 10
+    GUI_PADY_WheatstoneBridge = 1
     GUI_ROWSPAN_WheatstoneBridge = 1
     GUI_COLUMNSPAN_WheatstoneBridge = 1
 
@@ -302,7 +302,7 @@ if __name__ == '__main__':
 
     GUI_COLUMN_MYPRINT = 0
     GUI_PADX_MYPRINT = 1
-    GUI_PADY_MYPRINT = 10
+    GUI_PADY_MYPRINT = 1
     GUI_ROWSPAN_MYPRINT = 1
     GUI_COLUMNSPAN_MYPRINT = 1
     #################################################
@@ -334,7 +334,7 @@ if __name__ == '__main__':
     global root
 
     global root_Xpos
-    root_Xpos = 70
+    root_Xpos = 900
 
     global root_Ypos
     root_Ypos = 0
@@ -366,6 +366,7 @@ if __name__ == '__main__':
     NumberOfWheatstoneBridges = 4
 
     global WheatstoneBridge_MostRecentDict
+    WheatstoneBridge_MostRecentDict = dict()
 
     global WheatstoneBridge_MostRecentDict_VoltageRatioInputsList_VoltageRatio_Raw
     WheatstoneBridge_MostRecentDict_VoltageRatioInputsList_VoltageRatio_Raw = [-11111.0] * NumberOfWheatstoneBridges
@@ -453,18 +454,17 @@ if __name__ == '__main__':
                                                                                         ("VoltageRatioInputsList_VoltageRatio_LowPassFilter_Lambda", [0.90, 0.90, 0.90, 0.90]),
                                                                                         ("VoltageRatioInputsList_VoltageRatioChangeTrigger", [0.0, 0.0, 0.0, 0.0]),
                                                                                         ("VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds", [8, 8, 8, 8]),
-                                                                                        ("DataCollectionDurationInSecondsForZeroingBridge", 2.0),
+                                                                                        ("DataCollectionDurationInSecondsForSnapshottingBridge", 2.0),
                                                                                         ("MainThread_TimeToSleepEachLoop", 0.008)])
 
     if USE_WheatstoneBridge_FLAG == 1:
         try:
             Phidgets4xWheatstoneBridge1046_ReubenPython2and3ClassObject = Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Phidgets4xWheatstoneBridge1046_ReubenPython2and3ClassObject_setup_dict)
-            time.sleep(0.25)
             WheatstoneBridge_OPEN_FLAG = Phidgets4xWheatstoneBridge1046_ReubenPython2and3ClassObject.OBJECT_CREATED_SUCCESSFULLY_FLAG
 
         except:
             exceptions = sys.exc_info()[0]
-            print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3ClassObject __init__: Exceptions: %s" % exceptions, 0)
+            print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3ClassObject __init__: Exceptions: %s" % exceptions)
             traceback.print_exc()
     #################################################
     #################################################
@@ -491,7 +491,6 @@ if __name__ == '__main__':
 
         try:
             MyPrint_ReubenPython2and3ClassObject = MyPrint_ReubenPython2and3Class(MyPrint_ReubenPython2and3ClassObject_setup_dict)
-            time.sleep(0.25)
             MYPRINT_OPEN_FLAG = MyPrint_ReubenPython2and3ClassObject.OBJECT_CREATED_SUCCESSFULLY_FLAG
 
         except:
@@ -507,7 +506,7 @@ if __name__ == '__main__':
     MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3ClassObject_GUIparametersDict = dict([("EnableInternal_MyPrint_Flag", 1),
                                                                                                 ("NumberOfPrintLines", 10),
                                                                                                 ("UseBorderAroundThisGuiObjectFlag", 0),
-                                                                                                ("GraphCanvasWidth", 1280),
+                                                                                                ("GraphCanvasWidth", 890),
                                                                                                 ("GraphCanvasHeight", 700),
                                                                                                 ("GraphCanvasWindowStartingX", 0),
                                                                                                 ("GraphCanvasWindowStartingY", 0),
@@ -538,7 +537,6 @@ if __name__ == '__main__':
     if USE_PLOTTER_FLAG == 1:
         try:
             MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3ClassObject = MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class(MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3ClassObject_setup_dict)
-            time.sleep(0.25)
             PLOTTER_OPEN_FLAG = MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3ClassObject.OBJECT_CREATED_SUCCESSFULLY_FLAG
 
         except:
@@ -552,8 +550,7 @@ if __name__ == '__main__':
     #################################################
     if USE_WheatstoneBridge_FLAG == 1 and WheatstoneBridge_OPEN_FLAG != 1:
         print("Failed to open Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class.")
-        input("Press any key (and enter) to exit.")
-        sys.exit()
+        ExitProgram_Callback()
     #################################################
     #################################################
 
@@ -561,8 +558,7 @@ if __name__ == '__main__':
     #################################################
     if USE_MYPRINT_FLAG == 1 and MYPRINT_OPEN_FLAG != 1:
         print("Failed to open MyPrint_ReubenPython2and3ClassObject.")
-        input("Press any key (and enter) to exit.")
-        sys.exit()
+        ExitProgram_Callback()
     #################################################
     #################################################
 
@@ -570,8 +566,7 @@ if __name__ == '__main__':
     #################################################
     if USE_PLOTTER_FLAG == 1 and PLOTTER_OPEN_FLAG != 1:
         print("Failed to open MyPlotterPureTkinterClass_Object.")
-        input("Press any key (and enter) to exit.")
-        sys.exit()
+        ExitProgram_Callback()
     #################################################
     #################################################
 
@@ -589,7 +584,7 @@ if __name__ == '__main__':
         ###################################################
         ####################################################
 
-        ####################################################
+        #################################################### GET's
         ####################################################
         if WheatstoneBridge_OPEN_FLAG == 1:
 
@@ -602,7 +597,7 @@ if __name__ == '__main__':
                 WheatstoneBridge_MostRecentDict_VoltageRatioInputsList_UpdateDeltaTseconds = WheatstoneBridge_MostRecentDict["VoltageRatioInputsList_UpdateDeltaTseconds"]
                 WheatstoneBridge_MostRecentDict_Time = WheatstoneBridge_MostRecentDict["Time"]
 
-                #print("WheatstoneBridge_MostRecentDict_WheatstoneBridgesList_Position_WheatstoneBridgeTicks: " + str(WheatstoneBridge_MostRecentDict_WheatstoneBridgesList_Position_WheatstoneBridgeTicks))
+                #print("WheatstoneBridge_MostRecentDict_Time: " + str(WheatstoneBridge_MostRecentDict_Time))
         ####################################################
         ####################################################
 
@@ -652,7 +647,7 @@ if __name__ == '__main__':
 
     #################################################
     if PLOTTER_OPEN_FLAG == 1:
-        MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3ClassObject.ExternalSendEndCommandToStandAloneProcess()
+        MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3ClassObject.ExitProgram_Callback()
     #################################################
 
     #################################################

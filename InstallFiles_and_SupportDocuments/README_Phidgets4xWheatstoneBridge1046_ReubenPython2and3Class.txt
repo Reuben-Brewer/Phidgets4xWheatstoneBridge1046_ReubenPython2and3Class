@@ -1,4 +1,4 @@
-########################
+###########################
 
 Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class
 
@@ -24,7 +24,7 @@ www.reubotics.com
 
 Apache 2 License
 
-Software Revision A, 05/23/2022
+Software Revision B, 08/29/2022
 
 Verified working on: 
 Python 2.7, 3.8.
@@ -34,9 +34,14 @@ Raspberry Pi Buster
 
 *NOTE THAT YOU MUST INSTALL BOTH THE Phidget22 LIBRARY AS WELL AS THE PYTHON MODULE.*
 
-########################  
+###########################
 
 ########################### Python module installation instructions, all OS's
+
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies: ['future.builtins', 'LowPassFilter_ReubenPython2and3Class', 'Phidget22']
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_TestProgram: ['MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class', 'MyPrint_ReubenPython2and3Class']
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_NestedLayers: ['future.builtins', 'numpy', 'pexpect', 'psutil']
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_All: ['future.builtins', 'LowPassFilter_ReubenPython2and3Class', 'MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class', 'MyPrint_ReubenPython2and3Class', 'numpy', 'pexpect', 'Phidget22', 'psutil']
 
 https://pypi.org/project/Phidget22/#files
 
