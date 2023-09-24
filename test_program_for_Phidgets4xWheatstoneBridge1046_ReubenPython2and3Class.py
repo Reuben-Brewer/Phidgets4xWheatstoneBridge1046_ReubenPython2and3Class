@@ -6,7 +6,7 @@ reuben.brewer@gmail.com
 www.reubotics.com
 
 Apache 2 License
-Software Revision B, 08/29/2022
+Software Revision C, 09/24/2023
 
 Verified working on: Python 2.7, 3.8 for Windows 8.1, 10 64-bit and Raspberry Pi Buster (no Mac testing yet).
 '''
@@ -445,7 +445,7 @@ if __name__ == '__main__':
 
     global Phidgets4xWheatstoneBridge1046_ReubenPython2and3ClassObject_setup_dict
     Phidgets4xWheatstoneBridge1046_ReubenPython2and3ClassObject_setup_dict = dict([("GUIparametersDict", Phidgets4xWheatstoneBridge1046_ReubenPython2and3ClassObject_GUIparametersDict),
-                                                                                        ("DesiredSerialNumber", -1), #LEAVE AS -1 (FOR ANY BOARD), OR CHANGE THIS TO MATCH YOUR UNIQUE SERIAL NUMBER
+                                                                                        ("DesiredSerialNumber", 583674), #LEAVE AS -1 (FOR ANY BOARD), OR CHANGE THIS TO MATCH YOUR UNIQUE SERIAL NUMBER
                                                                                         ("WaitForAttached_TimeoutDuration_Milliseconds", 5000),
                                                                                         ("NameToDisplay_UserSet", "Reuben's Test Wheatstone Bridge Board"),
                                                                                         ("UsePhidgetsLoggingInternalToThisClassObjectFlag", 1),

@@ -6,7 +6,7 @@ reuben.brewer@gmail.com
 www.reubotics.com
 
 Apache 2 License
-Software Revision B, 08/29/2022
+Software Revision C, 09/24/2023
 
 Verified working on: Python 2.7, 3.8 for Windows 8.1, 10 64-bit and Raspberry Pi Buster (no Mac testing yet).
 '''
@@ -616,21 +616,70 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         #########################################################
         #########################################################
         try:
+            self.PhidgetsDeviceConnectedFlag = 0
 
             #########################################################
             for VoltageRatioInputChannel in range(0, self.NumberOfWheatstoneBridges):
                 print("Creating VoltageRatioInputChannel: " + str(VoltageRatioInputChannel))
                 self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects.append(VoltageRatioInput())
 
-                if self.DesiredSerialNumber != -1:
-                    self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setDeviceSerialNumber(self.DesiredSerialNumber)
+                ############################
+                try:
+                    if self.DesiredSerialNumber != -1:
+                        self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setDeviceSerialNumber(self.DesiredSerialNumber)
 
-                self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setChannel(VoltageRatioInputChannel)
-                self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setOnAttachHandler(self.VoltageRatioInputsList_ListOfOnAttachCallbackFunctionNames[VoltageRatioInputChannel])
-                self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setOnDetachHandler(self.VoltageRatioInputsList_ListOfOnDetachCallbackFunctionNames[VoltageRatioInputChannel])
-                self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setOnErrorHandler(self.VoltageRatioInputsList_ListOfOnErrorCallbackFunctionNames[VoltageRatioInputChannel])
-                self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setOnVoltageRatioChangeHandler(self.VoltageRatioInputsList_ListOfOnVoltageRatioChangeCallbackFunctionNames[VoltageRatioInputChannel])
-                self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].openWaitForAttachment(self.WaitForAttached_TimeoutDuration_Milliseconds)
+                except PhidgetException as e:
+                    print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: setDeviceSerialNumber, Phidget Exception %i: %s" % (e.code, e.details))
+                ############################
+
+                ############################
+                try:
+                    self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setChannel(VoltageRatioInputChannel)
+
+                except PhidgetException as e:
+                    print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: setChannel, Phidget Exception %i: %s" % (e.code, e.details))
+                ############################
+
+                ############################
+                try:
+                    self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setOnAttachHandler(self.VoltageRatioInputsList_ListOfOnAttachCallbackFunctionNames[VoltageRatioInputChannel])
+
+                except PhidgetException as e:
+                    print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: setOnAttachHandler, Phidget Exception %i: %s" % (e.code, e.details))
+                ############################
+
+                ############################
+                try:
+                    self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setOnDetachHandler(self.VoltageRatioInputsList_ListOfOnDetachCallbackFunctionNames[VoltageRatioInputChannel])
+
+                except PhidgetException as e:
+                    print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: setOnDetachHandler, Phidget Exception %i: %s" % (e.code, e.details))
+                ############################
+
+                ############################
+                try:
+                    self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setOnErrorHandler(self.VoltageRatioInputsList_ListOfOnErrorCallbackFunctionNames[VoltageRatioInputChannel])
+
+                except PhidgetException as e:
+                    print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: setOnErrorHandler, Phidget Exception %i: %s" % (e.code, e.details))
+                ############################
+
+                ############################
+                try:
+                    self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setOnVoltageRatioChangeHandler(self.VoltageRatioInputsList_ListOfOnVoltageRatioChangeCallbackFunctionNames[VoltageRatioInputChannel])
+
+                except PhidgetException as e:
+                    print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: setOnVoltageRatioChangeHandler, Phidget Exception %i: %s" % (e.code, e.details))
+                ############################
+
+                ############################
+                try:
+                    self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].openWaitForAttachment(self.WaitForAttached_TimeoutDuration_Milliseconds)
+
+                except PhidgetException as e:
+                    print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: openWaitForAttachment, Phidget Exception %i: %s" % (e.code, e.details))
+                ############################
+
             #########################################################
         
             self.PhidgetsDeviceConnectedFlag = 1
@@ -638,6 +687,7 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         except PhidgetException as e:
             self.PhidgetsDeviceConnectedFlag = 0
             print("Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class __init__: Failed to attach, Phidget Exception %i: %s" % (e.code, e.details))
+            traceback.print_exc()
         #########################################################
         #########################################################
 
@@ -772,7 +822,7 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         try:
             ##############################
             self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setDataInterval(self.VoltageRatioInputsList_CallbackUpdateDeltaTmilliseconds[VoltageRatioInputChannel])
-            #self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setDataRate()
+                #self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setDataRate()
 
             self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setBridgeGain(self.VoltageRatioInputsList_BridgeGain_PhidgetsConstant[VoltageRatioInputChannel])
             self.VoltageRatioInputsList_PhidgetsVoltageRatioInputObjects[VoltageRatioInputChannel].setBridgeEnabled(self.VoltageRatioInputsList_EnabledStateBoolean[VoltageRatioInputChannel])
@@ -806,6 +856,8 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
         except PhidgetException as e:
             self.VoltageRatioInputsList_AttachedAndOpenFlag[VoltageRatioInputChannel] = 0
             self.MyPrint_WithoutLogFile("VoltageRatioInputGENERALonAttachCallback event for VoltageRatioInputChannel " + str(VoltageRatioInputChannel) + ", ERROR: Failed to attach, Phidget Exception %i: %s" % (e.code, e.details))
+            traceback.print_exc()
+
     ##########################################################################################################
     ##########################################################################################################
 

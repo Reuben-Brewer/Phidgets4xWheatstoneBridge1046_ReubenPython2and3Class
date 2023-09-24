@@ -6,9 +6,9 @@ reuben.brewer@gmail.com
 www.reubotics.com
 
 Apache 2 License
-Software Revision F, 08/29/2022
+Software Revision I, 07/18/2023
 
-Verified working on: Python 2.7, 3.8 for Windows 8.1, 10 64-bit and Raspberry Pi Buster (no Mac testing yet).
+Verified working on: Python 2.7, 3.8 for Windows 8.1, 10 64-bit, Ubuntu 20.04, and Raspberry Pi Buster (no Mac testing yet).
 '''
 
 __author__ = 'reuben.brewer'
@@ -45,47 +45,18 @@ class LowPassFilter_ReubenPython2and3Class():
 
         #########################################################
         #########################################################
-        if "UseMedianFilterFlag" in setup_dict:
-            self.UseMedianFilterFlag = self.PassThrough0and1values_ExitProgramOtherwise("UseMedianFilterFlag", setup_dict["UseMedianFilterFlag"])
-        else:
-            self.UseMedianFilterFlag = 1
-
-        print("LowPassFilter_ReubenPython2and3Class __init__: UseMedianFilterFlag: " + str(self.UseMedianFilterFlag))
+        self.UpdateFilterParameters(setup_dict, StringPrefixToPrint="LowPassFilter_ReubenPython2and3Class __init__: ")
         #########################################################
         #########################################################
 
         #########################################################
         #########################################################
-        if "UseExponentialSmoothingFilterFlag" in setup_dict:
-            self.UseExponentialSmoothingFilterFlag = self.PassThrough0and1values_ExitProgramOtherwise("UseExponentialSmoothingFilterFlag", setup_dict["UseExponentialSmoothingFilterFlag"])
-        else:
-            self.UseExponentialSmoothingFilterFlag = 1
-
-        print("LowPassFilter_ReubenPython2and3Class __init__: UseExponentialSmoothingFilterFlag: " + str(self.UseExponentialSmoothingFilterFlag))
-        #########################################################
-        #########################################################
-
-        #########################################################
-        #########################################################
-        if "ExponentialSmoothingFilterLambda" in setup_dict:
-            self.ExponentialSmoothingFilterLambda = self.PassThroughFloatValuesInRange_ExitProgramOtherwise("ExponentialSmoothingFilterLambda", setup_dict["ExponentialSmoothingFilterLambda"], 0.0, 1.0)
-
-        else:
-            self.ExponentialSmoothingFilterLambda = 0.005
-
-        print("LowPassFilter_ReubenPython2and3Class __init__: ExponentialSmoothingFilterLambda: " + str(self.ExponentialSmoothingFilterLambda))
-        #########################################################
-        #########################################################
-
-        self.CurrentTime_CalculatedFromAddDataPointFromExternalProgram = -11111.0
-        self.LastTime_CalculatedFromAddDataPointFromExternalProgram = -11111.0
-        self.DataStreamingDeltaT_CalculatedFromAddDataPointFromExternalProgram = -11111.0
-        self.DataStreamingFrequency_CalculatedFromAddDataPointFromExternalProgram = -11111.0
-
         self.SignalInRaw = [0.0]*5
         self.SignalOutSmoothed = [0.0]*5
 
         self.MostRecentDataDict = dict()
+        #########################################################
+        #########################################################
 
         #########################################################
         #########################################################
@@ -105,62 +76,52 @@ class LowPassFilter_ReubenPython2and3Class():
 
     ##########################################################################################################
     ##########################################################################################################
-    def IsNumber0or1(self, InputNumber):
-
-        if float(InputNumber) == 0.0 or float(InputNumber) == 1:
-            return 1
-        else:
-            return 0
-    ##########################################################################################################
-    ##########################################################################################################
-
-    ##########################################################################################################
-    ##########################################################################################################
-    def PassThrough0and1values_ExitProgramOtherwise(self, InputNameString, InputNumber):
+    def PassThrough0and1values_ThrowErrorOtherwise(self, InputNameString, InputNumber):
 
         try:
             InputNumber_ConvertedToFloat = float(InputNumber)
+
         except:
             exceptions = sys.exc_info()[0]
-            print("PassThrough0and1values_ExitProgramOtherwise Error. InputNumber must be a float value, Exceptions: %s" % exceptions)
-            input("Press any key to continue")
-            sys.exit()
+            print("PassThrough0and1values_ThrowErrorOtherwise Error. InputNumber must be a float value, Exceptions: %s" % exceptions)
+            return -11111.0
 
         try:
             if InputNumber_ConvertedToFloat == 0.0 or InputNumber_ConvertedToFloat == 1:
                 return InputNumber_ConvertedToFloat
+
             else:
-                input("PassThrough0and1values_ExitProgramOtherwise Error. '" +
+                print("PassThrough0and1values_ThrowErrorOtherwise Error. '" +
                           InputNameString +
                           "' must be 0 or 1 (value was " +
                           str(InputNumber_ConvertedToFloat) +
                           "). Press any key (and enter) to exit.")
 
-                sys.exit()
+                return -11111.0
         except:
             exceptions = sys.exc_info()[0]
-            print("PassThrough0and1values_ExitProgramOtherwise Error, Exceptions: %s" % exceptions)
-            input("Press any key to continue")
-            sys.exit()
+            print("PassThrough0and1values_ThrowErrorOtherwise, Exceptions: %s" % exceptions)
+            return -11111.0
     ##########################################################################################################
     ##########################################################################################################
 
     ##########################################################################################################
     ##########################################################################################################
-    def PassThroughFloatValuesInRange_ExitProgramOtherwise(self, InputNameString, InputNumber, RangeMinValue, RangeMaxValue):
+    def PassThroughFloatValuesInRange_ThrowErrorOtherwise(self, InputNameString, InputNumber, RangeMinValue, RangeMaxValue):
         try:
             InputNumber_ConvertedToFloat = float(InputNumber)
+
         except:
             exceptions = sys.exc_info()[0]
-            print("PassThroughFloatValuesInRange_ExitProgramOtherwise Error. InputNumber must be a float value, Exceptions: %s" % exceptions)
-            input("Press any key to continue")
-            sys.exit()
+            print("PassThroughFloatValuesInRange_ThrowErrorOtherwise Error. InputNumber must be a float value, Exceptions: %s" % exceptions)
+            return -11111.0
 
         try:
             if InputNumber_ConvertedToFloat >= RangeMinValue and InputNumber_ConvertedToFloat <= RangeMaxValue:
                 return InputNumber_ConvertedToFloat
+
             else:
-                input("PassThroughFloatValuesInRange_ExitProgramOtherwise Error. '" +
+                print("PassThroughFloatValuesInRange_ThrowErrorOtherwise Error. '" +
                           InputNameString +
                           "' must be in the range [" +
                           str(RangeMinValue) +
@@ -169,55 +130,11 @@ class LowPassFilter_ReubenPython2and3Class():
                           "] (value was " +
                           str(InputNumber_ConvertedToFloat) + "). Press any key (and enter) to exit.")
 
-                sys.exit()
+                return -11111.0
         except:
             exceptions = sys.exc_info()[0]
-            print("PassThroughFloatValuesInRange_ExitProgramOtherwise Error, Exceptions: %s" % exceptions)
-            input("Press any key to continue")
-            sys.exit()
-    ##########################################################################################################
-    ##########################################################################################################
-
-    ##########################################################################################################
-    ##########################################################################################################
-    def TellWhichFileWereIn(self):
-
-        #We used to use this method, but it gave us the root calling file, not the class calling file
-        #absolute_file_path = os.path.dirname(os.path.realpath(sys.argv[0]))
-        #filename = absolute_file_path[absolute_file_path.rfind("\\") + 1:]
-
-        frame = inspect.stack()[1]
-        filename = frame[1][frame[1].rfind("\\") + 1:]
-        filename = filename.replace(".py","")
-
-        return filename
-    ##########################################################################################################
-    ##########################################################################################################
-
-    ##########################################################################################################
-    ##########################################################################################################
-    def getPreciseSecondsTimeStampString(self):
-        ts = time.time()
-
-        return ts
-    ##########################################################################################################
-    ##########################################################################################################
-
-    ##########################################################################################################
-    ##########################################################################################################
-    def UpdateFrequencyCalculation_CalculatedFromAddDataPointFromExternalProgram(self):
-
-        try:
-            self.DataStreamingDeltaT_CalculatedFromAddDataPointFromExternalProgram = self.CurrentTime_CalculatedFromAddDataPointFromExternalProgram - self.LastTime_CalculatedFromAddDataPointFromExternalProgram
-
-            if self.DataStreamingDeltaT_CalculatedFromAddDataPointFromExternalProgram != 0.0:
-                self.DataStreamingFrequency_CalculatedFromAddDataPointFromExternalProgram = 1.0/self.DataStreamingDeltaT_CalculatedFromAddDataPointFromExternalProgram
-
-            self.LastTime_CalculatedFromAddDataPointFromExternalProgram = self.CurrentTime_CalculatedFromAddDataPointFromExternalProgram
-        except:
-            exceptions = sys.exc_info()[0]
-            print("UpdateFrequencyCalculation_CalculatedFromAddDataPointFromExternalProgram ERROR with Exceptions: %s" % exceptions)
-            traceback.print_exc()
+            print("PassThroughFloatValuesInRange_ThrowErrorOtherwise Error, Exceptions: %s" % exceptions)
+            return -11111.0
     ##########################################################################################################
     ##########################################################################################################
 
@@ -274,10 +191,6 @@ class LowPassFilter_ReubenPython2and3Class():
 
         try:
             ###############################################
-            self.CurrentTime_CalculatedFromAddDataPointFromExternalProgram = self.getPreciseSecondsTimeStampString()
-            ###############################################
-
-            ###############################################
             NewDataPoint = float(NewDataPoint)
 
             self.SignalInRaw = list(numpy.roll(self.SignalInRaw, 1)) #MUST EXPLICITLY MAKE NEW LIST() FOR THIS TO WORK PROPERLY
@@ -301,13 +214,9 @@ class LowPassFilter_ReubenPython2and3Class():
             ###############################################
 
             ###############################################
-            self.UpdateFrequencyCalculation_CalculatedFromAddDataPointFromExternalProgram()
-            ###############################################
-
-            ###############################################
             self.MostRecentDataDict = dict([("SignalInRaw", self.SignalInRaw[0]),
                                            ("SignalOutSmoothed", self.SignalOutSmoothed[0]),
-                                           ("DataStreamingFrequency", self.DataStreamingFrequency_CalculatedFromAddDataPointFromExternalProgram)])
+                                           ("DataStreamingFrequency", -11111.0)]) #For backwards-compatibility, remove this later after we've updated our code.
 
             return self.MostRecentDataDict
             ###############################################
@@ -325,6 +234,50 @@ class LowPassFilter_ReubenPython2and3Class():
 
         #deepcopy is not required as MostRecentDataDict only contains numbers (no lists, dicts, etc. that go beyond 1-level).
         return self.MostRecentDataDict.copy()
+    ##########################################################################################################
+    ##########################################################################################################
+    
+    ##########################################################################################################
+    ##########################################################################################################
+    def UpdateFilterParameters(self, setup_dict, StringPrefixToPrint = ""):
+
+        ##########################################################
+        #########################################################
+        if "UseMedianFilterFlag" in setup_dict:
+            self.UseMedianFilterFlag = self.PassThrough0and1values_ThrowErrorOtherwise("UseMedianFilterFlag", setup_dict["UseMedianFilterFlag"])
+        else:
+            self.UseMedianFilterFlag = 1
+
+        if StringPrefixToPrint != "":
+            print(StringPrefixToPrint + "UseMedianFilterFlag: " + str(self.UseMedianFilterFlag))
+        #########################################################
+        #########################################################
+
+        #########################################################
+        #########################################################
+        if "UseExponentialSmoothingFilterFlag" in setup_dict:
+            self.UseExponentialSmoothingFilterFlag = self.PassThrough0and1values_ThrowErrorOtherwise("UseExponentialSmoothingFilterFlag", setup_dict["UseExponentialSmoothingFilterFlag"])
+        else:
+            self.UseExponentialSmoothingFilterFlag = 1
+
+        if StringPrefixToPrint != "":
+            print(StringPrefixToPrint + "UseExponentialSmoothingFilterFlag: " + str(self.UseExponentialSmoothingFilterFlag))
+        #########################################################
+        #########################################################
+
+        #########################################################
+        #########################################################
+        if "ExponentialSmoothingFilterLambda" in setup_dict:
+            self.ExponentialSmoothingFilterLambda = self.PassThroughFloatValuesInRange_ThrowErrorOtherwise("ExponentialSmoothingFilterLambda", setup_dict["ExponentialSmoothingFilterLambda"], 0.0, 1.0)
+
+        else:
+            self.ExponentialSmoothingFilterLambda = 0.005
+
+        if StringPrefixToPrint != "":
+            print(StringPrefixToPrint + "ExponentialSmoothingFilterLambda: " + str(self.ExponentialSmoothingFilterLambda))
+        #########################################################
+        #########################################################
+
     ##########################################################################################################
     ##########################################################################################################
 
