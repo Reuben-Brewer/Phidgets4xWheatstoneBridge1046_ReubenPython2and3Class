@@ -6,7 +6,7 @@ reuben.brewer@gmail.com
 www.reubotics.com
 
 Apache 2 License
-Software Revision C, 09/24/2023
+Software Revision D, 07/31/2024
 
 Verified working on: Python 2.7, 3.8 for Windows 8.1, 10 64-bit and Raspberry Pi Buster (no Mac testing yet).
 '''
@@ -1354,10 +1354,6 @@ class Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class(Frame): #Subclass th
     ##########################################################################################################
     ##########################################################################################################
     def StartGUI(self, GuiParent):
-
-        #self.GUI_Thread_ThreadingObject = threading.Thread(target=self.GUI_Thread, args=(GuiParent,))
-        #self.GUI_Thread_ThreadingObject.setDaemon(True) #Should mean that the GUI thread is destroyed automatically when the main thread is destroyed.
-        #self.GUI_Thread_ThreadingObject.start()
 
         self.GUI_Thread(GuiParent)
     ##########################################################################################################

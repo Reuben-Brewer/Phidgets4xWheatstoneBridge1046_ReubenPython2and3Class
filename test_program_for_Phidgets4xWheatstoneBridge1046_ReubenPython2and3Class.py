@@ -6,7 +6,7 @@ reuben.brewer@gmail.com
 www.reubotics.com
 
 Apache 2 License
-Software Revision C, 09/24/2023
+Software Revision D, 07/31/2024
 
 Verified working on: Python 2.7, 3.8 for Windows 8.1, 10 64-bit and Raspberry Pi Buster (no Mac testing yet).
 '''
@@ -14,9 +14,9 @@ Verified working on: Python 2.7, 3.8 for Windows 8.1, 10 64-bit and Raspberry Pi
 __author__ = 'reuben.brewer'
 
 ###########################################################
-from Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class import *
-from MyPrint_ReubenPython2and3Class import *
 from MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class import *
+from MyPrint_ReubenPython2and3Class import *
+from Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class import *
 ###########################################################
 
 ###########################################################
