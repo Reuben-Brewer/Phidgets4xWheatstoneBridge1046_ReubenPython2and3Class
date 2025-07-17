@@ -7,7 +7,11 @@ Wrapper (including ability to hook to Tkinter GUI) to read load-cell/wheatstone-
 From Phidgets' website:
 
 "The PhidgetBridge lets you connect up to 4 un-amplified Wheatstone bridges, such as:
-Strain gauges, Compression load cells, Pressure sensors/Barometers, Piezoresistive accelerometers, and Magnetoresistive sensors (Compasses)."
+Strain gauges,
+Compression load cells,
+Pressure sensors/Barometers,
+Piezoresistive accelerometers, and
+Magnetoresistive sensors (Compasses)."
 
 PhidgetBridge 4-Input
 
@@ -23,17 +27,15 @@ www.reubotics.com
 
 Apache 2 License
 
-Software Revision D, 07/31/2024
+Software Revision E, 07/17/2025
 
-Verified working on: 
+Verified working on:
 
-Python 2.7, 3.8.
+Python 3.11/12
 
-Windows 8.1, 10 64-bit
+Windows 10/11 64-bit
 
-Raspberry Pi Buster 
-
-(no Mac testing yet)
+Raspberry Pi Bookworm
 
 *NOTE THAT YOU MUST INSTALL BOTH THE Phidget22 LIBRARY AS WELL AS THE PYTHON MODULE.*
 
@@ -43,17 +45,17 @@ Raspberry Pi Buster
 
 Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies: ['future.builtins', 'LowPassFilter_ReubenPython2and3Class', 'Phidget22']
 
-Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_TestProgram: ['MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class', 'MyPrint_ReubenPython2and3Class']
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_TestProgram: ['keyboard', 'MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class', 'MyPrint_ReubenPython2and3Class']
 
-Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_NestedLayers: ['future.builtins', 'numpy', 'pexpect', 'psutil']
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_NestedLayers: ['future.builtins', 'GetCPUandMemoryUsageOfProcessByPID_ReubenPython3Class', 'numpy', 'pexpect', 'psutil', 'pyautogui']
 
-Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_All: ['future.builtins', 'LowPassFilter_ReubenPython2and3Class', 'MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class', 'MyPrint_ReubenPython2and3Class', 'numpy', 'pexpect', 'Phidget22', 'psutil']
+Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class, ListOfModuleDependencies_All:['future.builtins', 'GetCPUandMemoryUsageOfProcessByPID_ReubenPython3Class', 'keyboard', 'LowPassFilter_ReubenPython2and3Class', 'MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class', 'MyPrint_ReubenPython2and3Class', 'numpy', 'pexpect', 'Phidget22', 'psutil', 'pyautogui']
 
 https://pypi.org/project/Phidget22/#files
 
 To install the Python module using pip:
 
-pip install Phidget22 (with "sudo" if on Linux/Raspberry Pi)
+pip install Phidget22       (with "sudo" if on Linux/Raspberry Pi)
 
 To install the Python module from the downloaded .tar.gz file, enter downloaded folder and type "python setup.py install"
 
