@@ -126,7 +126,7 @@ def GUI_update_clock():
 def ExitProgram_Callback(OptionalArugment = 0):
     global EXIT_PROGRAM_FLAG
 
-    print("Exiting all threads in test_program_for_MyPlotterPureTkinterStandAloneProcess_ReubenPython2and3Class.")
+    print("Exiting all threads in test_program_for_Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class.py")
 
     EXIT_PROGRAM_FLAG = 1
 ##########################################################################################################
@@ -668,7 +668,7 @@ if __name__ == '__main__':
     ##########################################################################################################
     ##########################################################################################################
     ##########################################################################################################
-    print("Exiting main program 'test_program_for_Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class.")
+    print("Exiting main program test_program_for_Phidgets4xWheatstoneBridge1046_ReubenPython2and3Class.py")
 
     #################################################
     if Phidgets4xWheatstoneBridge1046_OPEN_FLAG == 1:
